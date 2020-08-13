@@ -16,7 +16,7 @@ PLEASE NOTE: The tool will ignore all kind of image, audio or video files.
 ## How it works? 
 You may decide upon what to include in the scan. You may want to search for license indications only or also for copyright information. The latter will increase the operations time drastically. 
 The scanning has several phases. It seeks for SPDX license identifiers as well as compares license texts using a similarity analysis.
-For the copyright scaning it has several private routines but mainly builds on [ScanCode](https://github.com/nexB/scancode-toolkit "ScanCode Repository") (credits to [Philippe](https://github.com/nexB/scancode-toolkit/commits?author=pombredanne])
+For the copyright scaning it has several routines but mainly builds on [ScanCode](https://github.com/nexB/scancode-toolkit "ScanCode Repository") (credits to [Philippe](https://github.com/nexB/scancode-toolkit/commits?author=pombredanne]))
 
 ## Where to learn more? 
 DeepScan is the CLI-version of the [TrustSource DeepScan](https://www.trustsource.io/deepscan "DeepScan Webservice UI") service. TrustSource DeepScan is a free repository scanning service operated by [TrustSource](https://www.trustsource.io "TrustSource Website"). To learn more about it and how it works, see the [TrustSource Knowledgebase](https://support.trustsource.io). It is the "Repo-Scanner" part of the OpenChain Reference Tooling. See [here](https://support.trustsource.io/hc/en-us/articles/360012782880-Architecture-Overview "Link to article") for a complete description of the reference model. 
