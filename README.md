@@ -25,7 +25,7 @@ DeepScan is the CLI-version of the [TrustSource DeepScan](https://www.trustsourc
 (tbc)
 
 # Contribution, Contact and Support
-Feel free to reach out to the [TrustSource Team](https://support.trustsource.io "TrustSource Knowledgebase") by dropping us an email or providing [issues](/org/ts-deepscan/issues).
+Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues).
 Contributions are welcome. Just clone, create your branch and send a pull request. Please make sure to agree to the [contribution agreement](/org/ContributionAgreeemnt.md "Contribution Agreement") and the [coding guidelines](/org/CodingGuidelines.md "Coding Guidelines").
 
 If you like the tool and want to support our further work, feel free to ((DONATE)) or sign a API-usage agreement.
