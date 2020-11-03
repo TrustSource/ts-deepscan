@@ -85,7 +85,7 @@ To scan a complete repository, use the --git parameter, e.g.:
 ```
 ts-deepscan --git https://github.com/trustsource/ts-deepscan
 ```
-**PLEASE NOTE:** This version does not really support git authentication. You may try using the URL authentication like `https://USER:PASSWORD@github.com/yourOrg/yourRepo`, which would most likely work. However, you also may clone the contents manually and use the --local option, to scan the cloned files, e.g.:
+**PLEASE NOTE:** This version does not really support modern authentication. Depnding on the configuration of your git, you may try using the URL authentication like `https://USER:PASSWORD@github.com/yourOrg/yourRepo`, which would most likely work, if it is allowed by the target git. However, you also may clone the contents manually and use the --local option, to scan the cloned files, e.g.:
 ```
 ts-deepscan --local /PATH-TO-REPO-TO-SCAN
 ```
