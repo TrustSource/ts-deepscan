@@ -1,10 +1,10 @@
 # TrustSource DeepScan 
-Repository scanner for the identification of licenses and copyright information. 
+Repository scanner for the identification of effective licenses and copyright information. 
 
 ## What it does? 
-DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All findings will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
+DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All *findings* will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
 
-We provided also a hosted version, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is availble for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. 
+We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is availble for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been setup to support many and large repositories. If you are inetersted using it from within your CI/CD pipeline, we offer API-subscriptions.
 
 To learn more about TrustSource - the only process focussed Open Source Compliance tool, which supports all aspects of the open source compliance tool chain - visit our website at https://www.trustsource.io.
 
@@ -48,7 +48,8 @@ Currently the tool searches all kind of source files for comments. It covers a w
 * TypeScript 
 * Yacc 
 * Yaml
-In addition it assesses LICENSE, COPYING and README files. Text, repsectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense texts using a similarity analysis approach. The tool compiles results in a JSON file. 
+
+In addition it assesses all LICENSE, COPYING and README named files. Text, respectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense text using a similarity analysis approach. The tool compiles results in a JSON file. It also could be used 
 
 **PLEASE NOTE: The tool will ignore all kind of image, audio or video files.**
 
@@ -63,15 +64,37 @@ DeepScan is the CLI-version of the [TrustSource DeepScan](https://www.trustsourc
 # Getting started / set up
 The tool is realized in python 3, we recommend to provide at least python 3.6. To install it you may use pip:
 ```
-
-```
 pip install ts-deepscan
+```
+Currently we do not support any alterantives, but we are planning to provide homebrew shortly.
+To execute a a scan, make sure the machine you are using to perform the scan has access to the internet, so that deepscan will be able to laod the latest Update of license data. This requires https (443). We regularly update the license texts. To provide this service, we kindly thank the [SPDX](https://spdx.org)-team. They do the heavy lifting on updating the licenses. 
+```
+ts-deepscan --git https://github.com/trustsource/ts-deepscan -o results.json
+```
+If you omit the -o parameter, the service will use standard out as default. For further options please the the next section.
 
+# TrustSource DeepScan CLI usage and configuration options
+DeepScan may be used to scan a complete repository or a single file. To switch between the two modes, you either provide the parameter --git or --url.
 
+## selecting the scan target
+To scan a particular file, use the --url parameter, e.g.:
+```
+ts-deepscan --url https://github.com/trustsource/ts-deepscan/LICENSE
+```
+To scan a complete repository, use the --git parameter, e.g.:
+```
+ts-deepscan --git https://github.com/trustsource/ts-deepscan
+```
+**PLEASE NOTE:** This version does not really support git authentication. You may try using the URL authentication like `https://USER:PASSWORD@github.com/yourOrg/yourRepo`, which would most likely work. However, you also may clone the contents manually and use the --local option, to scan the cloned files, e.g.:
+```
+ts-deepscan --local /PATH-TO-REPO-TO-SCAN
+```
 
-
-# TrustSource DeepScan CLI usage
-(tbc)
+## Switching Copyright collection on/off
+The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--includeCopyright* parameter, e.g.:  
+```
+ts-deepscan --git https://github.com/trustsource/ts-deepscan --includeCopyright
+```
 
 # Contribution, Contact and Support
 Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues).
