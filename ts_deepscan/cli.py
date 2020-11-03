@@ -1,7 +1,9 @@
-import sys
-import getopt
+import argparse
 import json
 import time
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 from .scanner.Scanner import *
 
@@ -9,40 +11,31 @@ from .analyser.Dataset import Dataset
 from .analyser.SourcesAnalyser import SourcesAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
 
-
-def usage():
-    print('usage: ts-deepscan <path> [-o filename] [--includeCopyrights] [--filterFiles]')
-
-
 def main():
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'o:', ['--output', '--includeCopyright', '--filterFiles'])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
+    parser = argparse.ArgumentParser()
 
-    # Read input
+    parser.add_argument("path", help="File or directory to be scanned")
 
-    if len(args) != 1:
-        usage()
-        exit(2)
+    parser.add_argument("-o", "--output", help="Store results to the OUTPUT in JSON format")
 
-    output = None
+    parser.add_argument("--includeCopyright",
+                        help="Enables searching for copyright information in files",
+                        action="store_true")
 
-    path = Path(args[0])
-    options = AnalyserOptions()
+    parser.add_argument("--filterFiles",
+                        help="Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code fies)",
+                        action="store_true")
 
-    for opt, arg in opts:
-        if opt in ['-o', '--output']:
-            output = arg
-        elif opt == '--includeCopyright':
-            options.includeCopyright = True
-        elif opt == '--filterFiles':
-            options.filterFiles = True
+    args = parser.parse_args()
+
+    path = Path(args.path)
+    options = AnalyserOptions(includeCopyright=args.includeCopyright,
+                              filterFiles=args.filterFiles)
+
+
 
     if not path.exists():
-        print('Path {} does not exist'.format(str(path)))
-        usage()
+        print('Error: path {} does not exist'.format(str(path)))
         exit(2)
 
 
@@ -54,8 +47,7 @@ def main():
     elif path.is_dir():
         result = scan_folder(path, options)
     else:
-        print('Path {} is not a file nor a directory'.format(str(path)))
-        usage()
+        print('Error: path {} is not a file nor a directory'.format(str(path)))
         exit(2)
 
     print()
@@ -65,8 +57,8 @@ def main():
         print('Nothing found')
         return
 
-    if output:
-        with open(output, 'w') as fp:
+    if args.output:
+        with open(args.output, 'w') as fp:
             fp.write(json.dumps(result))
     else:
         print(json.dumps(result, indent=2))
