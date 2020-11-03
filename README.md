@@ -76,7 +76,7 @@ If you omit the -o parameter, the service will use standard out as default. For 
 # TrustSource DeepScan CLI usage and configuration options
 DeepScan may be used to scan a complete repository or a single file. To switch between the two modes, you either provide the parameter --git or --url.
 
-## selecting the scan target
+## Selecting the scan target
 To scan a particular file, use the --url parameter, e.g.:
 ```
 ts-deepscan --url https://github.com/trustsource/ts-deepscan/LICENSE
@@ -90,11 +90,18 @@ ts-deepscan --git https://github.com/trustsource/ts-deepscan
 ts-deepscan --local /PATH-TO-REPO-TO-SCAN
 ```
 
-## Switching Copyright collection on/off
+## Switching copyright collection on/off
 The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--includeCopyright* parameter, e.g.:  
 ```
 ts-deepscan --git https://github.com/trustsource/ts-deepscan --includeCopyright
 ```
+
+## Selecting the output target
+Default output will be stdout (console). To write in a file instead, use the -o option, e.g.:
+```
+ts-deepscan --git https://github.com/trustsource/ts-deepscan --includeCopyright -o result.json
+```
+
 
 # Contribution, Contact and Support
 Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues).
