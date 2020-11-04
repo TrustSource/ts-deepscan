@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ts-deepscan',
-    python_requires='>3.8',
+    python_requires='>3.6',
     packages=[
         'ts_deepscan',
         'ts_deepscan.analyser',
@@ -11,7 +11,7 @@ setup(
         'ts_deepscan.scancode',
         'ts_deepscan.scancode.cluecode',
     ],
-    version='0.1',
+    version='0.2',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
