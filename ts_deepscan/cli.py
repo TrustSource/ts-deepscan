@@ -61,7 +61,7 @@ def main():
         with open(args.output, 'w') as fp:
             fp.write(json.dumps(result))
     else:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2), )
 
 
 
@@ -97,9 +97,18 @@ def scan_folder(path, options):
 
 
 def get_analysers():
-    path = config.get_datasetdir()
+    import spacy
 
+    path = config.get_datasetdir()
     dataset = Dataset(path)
+
+    if not spacy.util.is_package('en_core_web_sm'):
+        spacy.cli.download('en_core_web_sm');
+        print()
+
+    if not spacy.util.is_package('en_core_web_sm'):
+        print('Cannot download language model')
+        exit(2)
 
     print('Loading dataset...')
     dataset.load()

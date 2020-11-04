@@ -67,39 +67,36 @@ The tool is realized in python 3, we recommend to provide at least python 3.6. T
 pip install ts-deepscan
 ```
 Currently we do not support any alterantives, but we are planning to provide homebrew shortly.
-To execute a a scan, make sure the machine you are using to perform the scan has access to the internet, so that deepscan will be able to laod the latest Update of license data. This requires https (443). We regularly update the license texts. To provide this service, we kindly thank the [SPDX](https://spdx.org)-team. They do the heavy lifting on updating the licenses. 
+To execute a scan, make sure the machine you are using to perform the scan has access to the internet, so that deepscan will be able to laod the latest Update of license data. This requires https (443). We regularly update the license texts. To provide this service, we kindly thank the [SPDX](https://spdx.org)-team. They do the heavy lifting on updating the licenses. 
 ```
-ts-deepscan --git https://github.com/trustsource/ts-deepscan -o results.json
+git clone https://github.com/trustsource/ts-deepscan
+ts-deepscan -o results.json ./ts-deepscan
 ```
-If you omit the -o parameter, the service will use standard out as default. For further options please the the next section.
+If you omit the -o parameter, the tool will use standard out as default. For further options please the the next section.
 
 # TrustSource DeepScan CLI usage and configuration options
-DeepScan may be used to scan a complete repository or a single file. To switch between the two modes, you either provide the parameter --git or --url.
+DeepScan may be used to scan a complete directory or a single file depending on the path argument.
 
 ## Selecting the scan target
-To scan a particular file, use the --url parameter, e.g.:
+To scan a particular file:
 ```
-ts-deepscan --url https://github.com/trustsource/ts-deepscan/LICENSE
+ts-deepscan ./ts-deepscan/LICENSE
 ```
-To scan a complete repository, use the --git parameter, e.g.:
+To scan a complete directory:
 ```
-ts-deepscan --git https://github.com/trustsource/ts-deepscan
-```
-**PLEASE NOTE:** This version does not really support modern authentication. Depnding on the configuration of your git, you may try using the URL authentication like `https://USER:PASSWORD@github.com/yourOrg/yourRepo`, which would most likely work, if it is allowed by the target git. However, you also may clone the contents manually and use the --local option, to scan the cloned files, e.g.:
-```
-ts-deepscan --local /PATH-TO-REPO-TO-SCAN
+ts-deepscan ./ts-deepscan
 ```
 
 ## Switching copyright collection on/off
 The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--includeCopyright* parameter, e.g.:  
 ```
-ts-deepscan --git https://github.com/trustsource/ts-deepscan --includeCopyright
+ts-deepscan --includeCopyright ./ts-deepscan
 ```
 
 ## Selecting the output target
 Default output will be stdout (console). To write in a file instead, use the -o option, e.g.:
 ```
-ts-deepscan --git https://github.com/trustsource/ts-deepscan --includeCopyright -o result.json
+ts-deepscan --includeCopyright -o result.json ./ts-deepscan
 ```
 
 

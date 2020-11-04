@@ -22,7 +22,6 @@ setup(
     install_requires=[
         'six',
         'spacy>=2.2.0,<3.0.0',
-        'en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.0/en_core_web_sm-2.3.0.tar.gz',
         'nltk',
         'text-unidecode'
     ],
