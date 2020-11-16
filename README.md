@@ -1,6 +1,6 @@
 # TrustSource DeepScan 
 Repository scanner for the identification of effective licenses and copyright information. 
-[image](https://img.shields.io/badge/pypi/pyversions/bandit.svg)
+![Supported Versions](https://img.shields.io/badge/Python-3.6,%203.7,%203.8,%203.9-blue)
 
 ## What it does? 
 DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All *findings* will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
