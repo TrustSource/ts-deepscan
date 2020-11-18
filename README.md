@@ -7,7 +7,7 @@ Repository scanner for the identification of *_effective licenses and copyright 
 ## What it does? 
 DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All *findings* will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
 
-We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is availble for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been setup to support many and large repositories. If you are inetersted using it from within your CI/CD pipeline, we offer API-subscriptions.
+We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is available for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been setup to support many and large repositories. If you are inetersted using it from within your CI/CD pipeline, we offer API-subscriptions.
 
 To learn more about TrustSource - the only process focussed Open Source Compliance tool, which supports all aspects of the open source compliance tool chain - visit our website at https://www.trustsource.io.
 
@@ -52,7 +52,7 @@ Currently the tool searches all kind of source files for comments. It covers a w
 * Yacc 
 * Yaml
 
-In addition it assesses all LICENSE, COPYING and README named files. Text, respectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense text using a similarity analysis approach. The tool compiles results in a JSON file. It also could be used 
+In addition it assesses all LICENSE, COPYING and README named files. Text, respectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense text using a similarity analysis approach. The tool compiles results in a JSON file. 
 
 **PLEASE NOTE: The tool will ignore all kind of image, audio or video files.**
 
@@ -69,13 +69,17 @@ The tool is realized in python 3, we recommend to provide at least python 3.6. T
 ```
 pip install ts-deepscan
 ```
-Currently we do not support any alterantives, but we are planning to provide homebrew shortly.
+Currently we do not support any alterantive installations, but we are planning to provide homebrew shortly.
 To execute a scan, make sure the machine you are using to perform the scan has access to the internet, so that deepscan will be able to laod the latest Update of license data. This requires https (443). We regularly update the license texts. To provide this service, we kindly thank the [SPDX](https://spdx.org)-team. They do the heavy lifting on updating the licenses. 
 ```
+# clone a repo
 git clone https://github.com/trustsource/ts-deepscan
+
+# execute a scan
 ts-deepscan -o results.json ./ts-deepscan
 ```
 If you omit the -o parameter, the tool will use standard out as default. For further options please the the next section.
+In the first run, it will download the license data from this repository. Occasionlaly we update the file. Original data is provided by SPDX org.
 
 # TrustSource DeepScan CLI usage and configuration options
 DeepScan may be used to scan a complete directory or a single file depending on the path argument.
@@ -104,8 +108,8 @@ ts-deepscan --includeCopyright -o result.json ./ts-deepscan
 
 
 # Contribution, Contact and Support
-Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues).
+Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues). We 'ld love o hear your feedback to learn and improve.
 Contributions are welcome. Just clone, create your branch and send a pull request. Please make sure to agree to the [contribution agreement](/org/ContributionAgreeemnt.md "Contribution Agreement") and the [coding guidelines](/org/CodingGuidelines.md "Coding Guidelines").
 
-If you like the tool and want to support our further work, feel free to ((DONATE)) or sign a API-usage agreement.
+If you like the tool and want to support our further work, feel free to support us with donations or sign a API-usage agreement.
 Thank you & best regards!
