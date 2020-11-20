@@ -68,7 +68,8 @@ def main():
 def scan_file(path, options):
     scanner = FileScanner(path, get_analysers(), options)
     print('Scanning... [1\\1]')
-    return scanner.run()
+    result = scanner.run()
+    return list(result.values())[0] if result else None
 
 
 def scan_folder(path, options):

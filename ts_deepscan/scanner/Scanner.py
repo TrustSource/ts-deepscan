@@ -14,7 +14,7 @@ from .ScanException import *
 class Scanner(object):
     __version = "0.2"
 
-    def __init__(self, analysers, options: AnalyserOptions=None):
+    def __init__(self, analysers, options: AnalyserOptions=None, *args, **kwargs):
         self.__analysers = analysers
         self.options = options
 
@@ -59,8 +59,12 @@ class Scanner(object):
         if path.is_file() and path.stat().st_size > self.__file_size_limit:
             return {}
 
-        result = {}
         analysers = [a for a in self.__analysers if a.accepts(path, self.options)]
+        return self.perform_scan_using(path, analysers)
+
+
+    def perform_scan_using(self, path: Path, analysers):
+        result = {}
 
         for analyse in analysers:
             res = analyse(path, self.options)
@@ -72,8 +76,8 @@ class Scanner(object):
 
 
 class FileScanner(Scanner):
-    def __init__(self, path: Path, analysers, options=None):
-        super(FileScanner, self).__init__(analysers, options)
+    def __init__(self, path: Path, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.path = path
         self.__finished = False
 
@@ -86,31 +90,34 @@ class FileScanner(Scanner):
         with self.lock:
             return 1 if self.__finished else 0
 
+
     def run_impl(self):
         try:
             result = self.scan_file(self.path)
+            if result:
+                result = { self.path.name: result }
 
             with self.lock:
                 self.__finished = True
 
             if self.onFileScanSuccess:
                 self.onFileScanSuccess(result)
-                return
+                return None
             else:
                 return result
 
         except:
             if self.onFileScanError:
                 self.onFileScanError(self.path.name)
-                return
+                return None
             else:
                 return None
 
 
 
 class FolderScanner(Scanner):
-    def __init__(self, path: Path, analysers, options=None):
-        super(FolderScanner, self).__init__(analysers, options)
+    def __init__(self, path: Path, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.path = path
         self.__tasks = Queue()

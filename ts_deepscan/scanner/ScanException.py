@@ -21,15 +21,3 @@ class ScanException(Exception):
 class InternalScanException(ScanException):
     code = 0
     description = "Internal error"
-
-
-class URLScanException(ScanException):
-    code = 1
-    description = "Invalid URL"
-
-
-class HTTPScanException(ScanException):
-    code = 2
-
-class GitScanException(ScanException):
-    code = 3

@@ -5,7 +5,7 @@ from . import textutils
 
 from pathlib import Path
 
-class Dataset:
+class Dataset(object):
     def __init__(self, path: Path):
         self.__path = path
         self.__datasetpath = self.__path / 'dataset.json'
