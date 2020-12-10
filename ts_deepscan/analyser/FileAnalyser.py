@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2020 EACG GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
 
 def _match_prop(opts, prop, val):
     return prop in opts and opts[prop] == val

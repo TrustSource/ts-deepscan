@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 EACG GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import hashlib
 import string
 import spacy
