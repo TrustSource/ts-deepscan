@@ -78,7 +78,7 @@ git clone https://github.com/trustsource/ts-deepscan
 # execute a scan
 ts-deepscan -o results.json ./ts-deepscan
 ```
-If you omit the -o parameter, the tool will use standard out as default. For further options please the the next section.
+If you omit the -o parameter, the tool will use standard out as default. For further options please see the next section.
 In the first run, it will download the license data from this repository. Occasionlaly we update the file. Original data is provided by SPDX org.
 
 # TrustSource DeepScan CLI usage and configuration options
@@ -106,6 +106,19 @@ Default output will be stdout (console). To write in a file instead, use the -o 
 ts-deepscan --includeCopyright -o result.json ./ts-deepscan
 ```
 
+# Next steps
+On our roadmap we see two capabilities being of relevance:
+
+## a) Identify license deltas
+Given we identified a license text, with a similarity lower than 90%, it is possible that the original license text has been amended. Sometimes authors do add a clause or remove one. In a next version, we plan to outline these deltas. 
+
+## b) Identify re-use of code
+Currently each file assessed is hashed, so that we do not need to assess the same file several times. This can be used to identify multiple appearances of the same file across different repositories. 
+
+## c) Treatment of linked reposiories
+In Github and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with direct links
+
+In case you have specific need for any of the cases mentioned above, feel free to reach out and let us know about your case. If you have additional ideas, feel free to open a feature request in the issues section. 
 
 # Contribution, Contact and Support
 Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues). We 'ld love o hear your feedback to learn and improve.
