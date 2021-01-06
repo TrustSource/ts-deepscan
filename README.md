@@ -115,7 +115,7 @@ Given we identified a license text, with a similarity lower than 90%, it is poss
 ### b) Identify re-use of code
 Currently each file assessed is hashed, so that we do not need to assess the same file several times. This can be used to identify multiple appearances of the same file across different repositories. 
 
-### c) Treatment of linked reposiories
+### c) Treatment of linked repositories
 In Github and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with direct links
 
 In case you have specific need for any of the cases mentioned above, feel free to reach out and let us know about your case. If you have additional ideas, feel free to open a feature request in the issues section. 
