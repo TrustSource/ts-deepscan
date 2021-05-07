@@ -126,7 +126,7 @@ def scan_folder(path, options):
 
 
 def upload(scan, moduleName, apiKey):
-    url = 'https://gc795o9o09.execute-api.eu-central-1.amazonaws.com/Prod/upload-results?module={}'.format(moduleName)
+    url = ''
     headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
