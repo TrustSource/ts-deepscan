@@ -11,7 +11,7 @@ setup(
         'ts_deepscan.scancode',
         'ts_deepscan.scancode.cluecode',
     ],
-    version='0.3',
+    version='0.4.4',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -23,7 +23,8 @@ setup(
         'six',
         'spacy>=2.2.0,<3.0.0',
         'nltk',
-        'text-unidecode'
+        'text-unidecode',
+        'requests'
     ],
     scripts=['ts-deepscan'],
     entry_points={

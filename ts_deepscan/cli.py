@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import argparse
+
 import json
 import time
+import argparse
+import requests
 import warnings
-
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+from .scanner.Scan import Scan
 from .scanner.Scanner import *
 
 from .analyser.Dataset import Dataset
@@ -27,8 +29,17 @@ def main():
                         action="store_true")
 
     parser.add_argument("--filterFiles",
-                        help="Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code fies)",
+                        help="Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code files)",
                         action="store_true")
+
+    parser.add_argument("--upload",
+                        help="Upload to the TrustSource service",
+                        action="store_true")
+
+    parser.add_argument("--moduleName", help="Module name of the scan")
+
+    parser.add_argument("--apiKey", help="Upload to the TrustSource service")
+
 
     args = parser.parse_args()
 
@@ -45,11 +56,12 @@ def main():
 
     # Run scanner
     result = None
+    stats = None
 
     if path.is_file():
-        result = scan_file(path, options)
+        result, stats = scan_file(path, options)
     elif path.is_dir():
-        result = scan_folder(path, options)
+        result, stats = scan_folder(path, options)
     else:
         print('Error: path {} is not a file nor a directory'.format(str(path)))
         exit(2)
@@ -61,9 +73,17 @@ def main():
         print('Nothing found')
         return
 
-    if args.output:
+    if args.upload:
+        scan = Scan(options=options)
+
+        scan.result = result
+        scan.stats = stats
+
+        upload(scan, args.moduleName, args.apiKey)
+
+    elif args.output:
         with open(args.output, 'w') as fp:
-            fp.write(json.dumps(result))
+            fp.write(json.dumps(result, indent=2))
     else:
         print(json.dumps(result, indent=2), )
 
@@ -73,7 +93,7 @@ def scan_file(path, options):
     scanner = FileScanner(path, get_analysers(), options)
     print('Scanning... [1\\1]')
     result = scanner.run()
-    return list(result.values())[0] if result else None
+    return (list(result.values())[0], {'total': 1, 'finished': 1}) if result else None, None
 
 
 def scan_folder(path, options):
@@ -98,7 +118,29 @@ def scan_folder(path, options):
     progress.join()
 
     print_progress(final=True)
-    return result
+
+    return result, {
+        'total': scanner.totalTasks,
+        'finished': scanner.finishedTasks
+    }
+
+
+def upload(scan, moduleName, apiKey):
+    url = 'https://gc795o9o09.execute-api.eu-central-1.amazonaws.com/Prod/upload-results?module={}'.format(moduleName)
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ts-deepscan/1.0.0',
+        'X-APIKEY': apiKey
+    }
+
+    response = requests.post(url, json=scan.__dict__, headers=headers)
+    print(json.dumps(response.text, indent=2))
+
+    if response.status_code == 201:
+        return
+    else:
+        exit(2)
 
 
 def get_analysers():
@@ -108,7 +150,7 @@ def get_analysers():
     dataset = Dataset(path)
 
     if not spacy.util.is_package('en_core_web_sm'):
-        spacy.cli.download('en_core_web_sm');
+        spacy.cli.download('en_core_web_sm')
         print()
 
     if not spacy.util.is_package('en_core_web_sm'):
@@ -119,4 +161,6 @@ def get_analysers():
     dataset.load()
 
     return [LicenseAnalyser(dataset), SourcesAnalyser(dataset)]
+
+
 

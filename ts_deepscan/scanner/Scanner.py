@@ -110,7 +110,8 @@ class FileScanner(Scanner):
             else:
                 return result
 
-        except:
+        except Exception as err:
+            print(err)
             if self.onFileScanError:
                 self.onFileScanError(self.path.name)
                 return None
