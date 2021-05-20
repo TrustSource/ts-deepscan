@@ -40,6 +40,7 @@ def main():
 
     parser.add_argument("--apiKey", help="Upload to the TrustSource service")
 
+    parser.add_argument("--baseUrl", help="TrustSource service base URL", )
 
     args = parser.parse_args()
 
@@ -79,7 +80,7 @@ def main():
         scan.result = result
         scan.stats = stats
 
-        upload(scan, args.moduleName, args.apiKey)
+        upload(scan, args.moduleName, args.apiKey, args.baseUrl)
 
     elif args.output:
         with open(args.output, 'w') as fp:
@@ -125,13 +126,20 @@ def scan_folder(path, options):
     }
 
 
-def upload(scan, moduleName, apiKey):
-    url = ''
+def upload(scan, moduleName, apiKey, baseUrl):
+    if not baseUrl:
+        baseUrl = 'https://api.trustsource.io/deepscan'
+
+    if not moduleName or not apiKey:
+        print('Module name and API key must be provided')
+        exit(2)
+
+    url = '{}/upload-results?module={}'.format(baseUrl, moduleName)
     headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'User-Agent': 'ts-deepscan/1.0.0',
-        'X-APIKEY': apiKey
+        'x-api-key': apiKey
     }
 
     response = requests.post(url, json=scan.__dict__, headers=headers)
