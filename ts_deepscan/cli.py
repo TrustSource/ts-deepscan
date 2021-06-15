@@ -128,7 +128,7 @@ def scan_folder(path, options):
 
 def upload(scan, moduleName, apiKey, baseUrl):
     if not baseUrl:
-        baseUrl = 'https://api.trustsource.io/deepscan'
+        baseUrl = 'https://api.prod.trustsource.io/deepscan'
 
     if not moduleName or not apiKey:
         print('Module name and API key must be provided')

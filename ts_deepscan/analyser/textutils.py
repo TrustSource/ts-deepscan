@@ -169,14 +169,18 @@ def find_spdx_license_id(text):
 
     return None
 
+_ignored_aliases = [
+    'Intel', 'MIT', 'Crossword', 'Cube', 'curl', 'DOC', 'EPICS', 'Fair', 'Glide', 'JSON', 'Libpng', 'MakeIndex',
+    'Nokia', 'Noweb', 'NTP', 'OML', 'OpenSSL', 'Plexus', 'PostgreSQL', 'psutils', 'psfrag', 'Ruby', 'Saxpath',
+    'Sendmail', 'Sleepycat', 'TCL', 'Vim', 'W3C', 'X11', 'Xerox', 'Xnet', 'Zed', 'Zlib'
+]
 
 def find_aliases(text, dataset):
     for k, v in dataset.data.items():
         name = v['name']
         aliases = v['aliases']
-        ignored = ['JSON', 'Ruby']
 
-        if k not in aliases and k not in ignored:
+        if k not in aliases and k not in _ignored_aliases:
             aliases.append(k)
         
         if name not in aliases:
