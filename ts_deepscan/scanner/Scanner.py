@@ -16,7 +16,7 @@ from .ScanException import *
 
 
 class Scanner(object):
-    __version = "0.2"
+    __version = "0.3"
 
     def __init__(self, analysers, options: AnalyserOptions=None, *args, **kwargs):
         self.__analysers = analysers
