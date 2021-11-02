@@ -10,6 +10,8 @@ import requests
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+from typing import List
+
 from .scanner.Scan import Scan
 from .scanner.Scanner import *
 
@@ -20,7 +22,7 @@ from .analyser.LicenseAnalyser import LicenseAnalyser
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("path", help="File or directory to be scanned")
+    parser.add_argument("path", help="File or directory to be scanned", nargs='+')
 
     parser.add_argument("-o", "--output", help="Store results to the OUTPUT in JSON format")
 
@@ -43,29 +45,11 @@ def main():
     parser.add_argument("--baseUrl", help="TrustSource service base URL", )
 
     args = parser.parse_args()
-
-    path = Path(args.path)
     options = AnalyserOptions(includeCopyright=args.includeCopyright,
                               filterFiles=args.filterFiles)
 
 
-
-    if not path.exists():
-        print('Error: path {} does not exist'.format(str(path)))
-        exit(2)
-
-
-    # Run scanner
-    result = None
-    stats = None
-
-    if path.is_file():
-        result, stats = scan_file(path, options)
-    elif path.is_dir():
-        result, stats = scan_folder(path, options)
-    else:
-        print('Error: path {} is not a file nor a directory'.format(str(path)))
-        exit(2)
+    result, stats = execute([Path(p) for p in args.path], options)
 
     print()
 
@@ -90,15 +74,8 @@ def main():
 
 
 
-def scan_file(path, options):
-    scanner = FileScanner(path, get_analysers(), options)
-    print('Scanning... [1\\1]')
-    result = scanner.run()
-    return (list(result.values())[0], {'total': 1, 'finished': 1}) if result else None, None
-
-
-def scan_folder(path, options):
-    scanner = FolderScanner(path, get_analysers(), options)
+def execute(paths: List[Path], options):
+    scanner = FSScanner(paths, get_analysers(), options)
     scan_finished = False
 
     def print_progress(final=False):
@@ -141,13 +118,12 @@ def upload(scan, moduleName, apiKey, baseUrl):
         'User-Agent': 'ts-deepscan/1.0.0',
         'x-api-key': apiKey
     }
-
+    print('Uploading results...')
     response = requests.post(url, json=scan.__dict__, headers=headers)
+
     print(json.dumps(response.text, indent=2))
 
-    if response.status_code == 201:
-        return
-    else:
+    if response.status_code not in range(200, 300):
         exit(2)
 
 

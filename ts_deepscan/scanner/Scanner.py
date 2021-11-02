@@ -9,6 +9,7 @@ import logging
 from .. import config
 
 from queue import *
+from typing import List
 from pathlib import Path
 
 from ..analyser.FileAnalyser import *
@@ -120,11 +121,11 @@ class FileScanner(Scanner):
 
 
 
-class FolderScanner(Scanner):
-    def __init__(self, path: Path, *args, **kwargs):
+class FSScanner(Scanner):
+    def __init__(self, paths: List[Path], *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.path = path
+        self.__paths = paths
         self.__tasks = Queue()
         self.__parallel_tasks = None # os.cpu_count()
 
@@ -138,6 +139,10 @@ class FolderScanner(Scanner):
 
         self.__totalTasks = 0
 
+
+    @property
+    def path(self):
+        return None
 
     @property
     def tasks(self):
@@ -159,13 +164,20 @@ class FolderScanner(Scanner):
         for w in workers:
             w.start()
 
-        for root, dirs, files in os.walk(str(self.path)):
-            dirs[:] = [d for d in dirs if not d.startswith('.git')]
-            for file in files:
-                if not file.startswith('.'):
-                    with self.lock:
-                        self.__totalTasks += 1
-                    self.__tasks.put(Path(os.path.join(root, file)))
+        def schedule(f: Path):
+            if not f.name.startswith('.'):
+                with self.lock:
+                    self.__totalTasks += 1
+                self.__tasks.put(f)
+
+        for p in self.__paths:
+            if p.is_file():
+                schedule(p)
+            elif p.is_dir():
+                for root, dirs, files in os.walk(str(p)):
+                    dirs[:] = [d for d in dirs if not d.startswith('.')]
+                    for file in files:
+                        schedule(Path(os.path.join(root, file)))
 
         for _ in workers:
             self.__tasks.put(None)
@@ -175,6 +187,19 @@ class FolderScanner(Scanner):
             files.update(w.results)
 
         return files
+
+
+
+
+class FolderScanner(FSScanner):
+    def __init__(self, path: Path, *args, **kwargs):
+        super().__init__([path], *args, **kwargs)
+        self.__path = path
+
+    @property
+    def path(self):
+        return self.__path
+
 
 
 
@@ -195,10 +220,12 @@ class Worker(threading.Thread):
     def run(self):
         while True:
             path = self.__scanner.tasks.get()
+
             if path is None:
                 break
 
-            relpath = str(path.relative_to(self.__scanner.path))
+            relpath = str(path.relative_to(self.__scanner.path)) \
+                if self.__scanner.path else str(path)
 
             try:
                 result = self.__scanner.scan_file(path)
