@@ -5,6 +5,7 @@
 import os
 import threading
 import logging
+import fnmatch
 
 from .. import config
 
@@ -26,6 +27,7 @@ class Scanner(object):
         self.lock = threading.Lock()
 
         # Result callbacks
+        self.onFileScanDone = None  # Lambda accepting str with a file path
         self.onFileScanSuccess = None # Lambda accepting dict with results
         self.onFileScanError = None # Lambda accepting path of the file and the error
 
@@ -105,6 +107,9 @@ class FileScanner(Scanner):
             with self.lock:
                 self.__finished = True
 
+            if self.onFileScanDone:
+                self.onFileScanDone(self.path)
+
             if self.onFileScanSuccess:
                 self.onFileScanSuccess(result)
                 return None
@@ -177,7 +182,8 @@ class FSScanner(Scanner):
                 for root, dirs, files in os.walk(str(p)):
                     dirs[:] = [d for d in dirs if not d.startswith('.')]
                     for file in files:
-                        schedule(Path(os.path.join(root, file)))
+                        if not self.options.filePatterns or any( fnmatch.fnmatch(os.path.basename(file), pat) for pat in self.options.filePatterns):
+                            schedule(Path(os.path.join(root, file)))
 
         for _ in workers:
             self.__tasks.put(None)
@@ -229,6 +235,9 @@ class Worker(threading.Thread):
 
             try:
                 result = self.__scanner.scan_file(path)
+
+                if self.__scanner.onFileScanDone:
+                    self.__scanner.onFileScanDone(relpath)
 
                 if not result:
                     continue

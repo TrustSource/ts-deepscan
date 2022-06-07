@@ -7,9 +7,10 @@ def _match_prop(opts, prop, val):
 
 
 class AnalyserOptions:
-    def __init__(self, includeCopyright=False, filterFiles=True):
+    def __init__(self, includeCopyright=False, filterFiles=True, filePatterns=None):
         self.includeCopyright = includeCopyright
         self.filterFiles = filterFiles
+        self.filePatterns = filePatterns if filePatterns else []
 
     def match(self, opts: dict):
         return opts and \

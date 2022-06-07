@@ -6,12 +6,13 @@
 import json
 import time
 import argparse
-import requests
+
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-from typing import List
+from ts_python_client.client import Client
 
+from .client import DSScanner
 from .scanner.Scan import Scan
 from .scanner.Scanner import *
 
@@ -26,6 +27,12 @@ def main():
 
     parser.add_argument("-o", "--output", help="Store results to the OUTPUT in JSON format")
 
+    parser.add_argument("--printStats",
+                        help = "Print statistics",
+                        action="store_true")
+
+    parser.add_argument("--outputStats", help="Store statistics to the OUTPUTSTATS in JSON format")
+
     parser.add_argument("--includeCopyright",
                         help="Enables searching for copyright information in files",
                         action="store_true")
@@ -34,49 +41,76 @@ def main():
                         help="Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code files)",
                         action="store_true")
 
+    parser.add_argument("--pattern",
+                        help="Specify Unix style file name pattern",
+                        action='append')
+
     parser.add_argument("--upload",
                         help="Upload to the TrustSource service",
                         action="store_true")
+
+    parser.add_argument("--projectName", help="Project name")
 
     parser.add_argument("--moduleName", help="Module name of the scan")
 
     parser.add_argument("--apiKey", help="Upload to the TrustSource service")
 
-    parser.add_argument("--baseUrl", help="TrustSource service base URL", )
+    parser.add_argument("--baseUrl", help="DeepScan service base URL", )
+
+    parser.add_argument("--deepscanBaseUrl", help="TrustSource service base URL", )
 
     args = parser.parse_args()
+
     options = AnalyserOptions(includeCopyright=args.includeCopyright,
-                              filterFiles=args.filterFiles)
+                              filterFiles=args.filterFiles,
+                              filePatterns=args.pattern)
 
 
-    result, stats = execute([Path(p) for p in args.path], options)
+    result, files, stats = execute([Path(p) for p in args.path], options)
 
-    print()
-
-    # Output result
     if not result:
         print('Nothing found')
-        return
 
-    if args.upload:
+    elif args.upload:
         scan = Scan(options=options)
 
         scan.result = result
         scan.stats = stats
 
-        upload(scan, args.moduleName, args.apiKey, args.baseUrl)
+        scanner = DSScanner(scan, moduleName=args.moduleName, deepscanBaseUrl=args.deepscanBaseUrl)
+        tool = Client('ts-deepscan', scanner)
+
+        tool.run(baseUrl=args.baseUrl,
+                 apiKey=args.apiKey,
+                 projectName=args.projectName,
+                 skipTransfer=False)
+
 
     elif args.output:
         with open(args.output, 'w') as fp:
             fp.write(json.dumps(result, indent=2))
     else:
-        print(json.dumps(result, indent=2), )
+        print(json.dumps(result, indent=2))
+
+    if args.printStats or args.outputStats:
+        stats = prepare_stats(result, files, stats)
+        stats = json.dumps(stats, indent=2)
+
+        if args.printStats:
+            print(stats)
+        if args.outputStats:
+            with open(args.outputStats, 'w') as fp:
+                fp.write(stats)
 
 
 
 def execute(paths: List[Path], options):
     scanner = FSScanner(paths, get_analysers(), options)
+
     scan_finished = False
+    scanned_files = []
+
+    scanner.onFileScanDone = lambda path: scanned_files.append(path)
 
     def print_progress(final=False):
         print('\rScanning... [{}\{}]'.format(scanner.finishedTasks, scanner.totalTasks), end='')
@@ -97,34 +131,35 @@ def execute(paths: List[Path], options):
 
     print_progress(final=True)
 
-    return result, {
+    return result, scanned_files, {
         'total': scanner.totalTasks,
         'finished': scanner.finishedTasks
     }
 
 
-def upload(scan, moduleName, apiKey, baseUrl):
-    if not baseUrl:
-        baseUrl = 'https://api.prod.trustsource.io/deepscan'
+def prepare_stats(result, files, stats):
+    copyrights = {}
+    copyrights_info_count = 0
 
-    if not moduleName or not apiKey:
-        print('Module name and API key must be provided')
-        exit(2)
+    for path, res in result.items():
+        for com in res.get('comments', []):
+            for cop in com.get('copyright', []):
+                for h in cop.get('holders', []):
+                    copyrights_info_count += 1
+                    if h in copyrights:
+                        copyrights[h].append(path)
+                    else:
+                        copyrights[h] = [path]
+                    files.remove(path)
 
-    url = '{}/upload-results?module={}'.format(baseUrl, moduleName)
-    headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'ts-deepscan/1.0.0',
-        'x-api-key': apiKey
-    }
-    print('Uploading results...')
-    response = requests.post(url, json=scan.__dict__, headers=headers)
+    stats['copyright_info'] = copyrights_info_count
+    stats['no_copyright_info'] = len(files)
 
-    print(json.dumps(response.text, indent=2))
+    stats['copyright'] = copyrights
+    copyrights['no_copyright'] = files
 
-    if response.status_code not in range(200, 300):
-        exit(2)
+    return stats
+
 
 
 def get_analysers():
