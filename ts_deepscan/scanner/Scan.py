@@ -2,16 +2,18 @@ import json
 
 from typing import List
 from datetime import datetime
+from dataclasses import dataclass, field, asdict
 
 from ..analyser.FileAnalyser import AnalyserOptions
 
+@dataclass
 class Scan(object):
-    def __init__(self, options: AnalyserOptions, time: datetime=datetime.now()):
-        self.time = str(time)
-        self.options = {
-            'includeCopyright': options.includeCopyright
-        }
-        self.result = {}
+    result: dict = field(default_factory=lambda: {})
+    no_result: list = field(default_factory=lambda: [])
+    stats: dict = field(default_factory=lambda: {})
+    incompatible_licenses: list = field(default_factory=lambda: [])
+    time: datetime = datetime.now()
+    options: AnalyserOptions = AnalyserOptions()
 
     @property
     def licenses(self) -> List[str]:
@@ -31,18 +33,30 @@ class Scan(object):
 
         return list(lics)
 
-    @property
-    def is_compatible_licenses(self):
-#        import osadl_matrix
-#        lics = self.licenses
-#        return len(lics) <= 1 or osadl_matrix.is_compatible(lics) != osadl_matrix.OSADLCompatibility.NO
-        return True
+    def compute_licenses_compatibility(self):
+        import osadl_matrix
+        lics = self.licenses
+        while len(lics) > 1:
+            l1 = lics.pop()
+            for l2 in lics:
+                if osadl_matrix.is_compatible(l1, l2) == osadl_matrix.OSADLCompatibility.NO:
+                    self.incompatible_licenses.append([l1, l2])
+                elif osadl_matrix.is_compatible(l2, l1) == osadl_matrix.OSADLCompatibility.NO:
+                    self.incompatible_licenses.append([l2, l1])
 
     @staticmethod
-    def load(data: str):
-        return Scan(**json.loads(data))
+    def from_dict(data: dict) -> 'Scan':
+        return Scan(
+            result = data.get('result', {}),
+            no_result = data.get('no_result', []),
+            stats = data.get('stats', {}),
+            incompatible_licenses=data.get('incompatible_licenses', []),
+            options=AnalyserOptions.from_dict(data.get('options', {}))
+        )
 
-    def dump(self) -> str:
-        return json.dumps(self.__dict__)
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        del d['time']
+        return d
 
 

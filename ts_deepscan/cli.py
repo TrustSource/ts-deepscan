@@ -1,145 +1,109 @@
-# SPDX-FileCopyrightText: 2020 EACG GmbH
-#
-# SPDX-License-Identifier: Apache-2.0
-
-
 import json
-import time
-import argparse
+import click
+import pathlib
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-from ts_python_client.client import Client
-
 from .client import DSScanner
 from .scanner.Scan import Scan
 from .scanner.Scanner import *
+from .scanner.ParallelScanner import ParallelScanner
+from .analyser import get_analysers
 
-from .analyser.Dataset import Dataset
-from .analyser.SourcesAnalyser import SourcesAnalyser
-from .analyser.LicenseAnalyser import LicenseAnalyser
-
-def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("path", help="File or directory to be scanned", nargs='+')
-
-    parser.add_argument("-o", "--output", help="Store results to the OUTPUT in JSON format")
-
-    parser.add_argument("--printStats",
-                        help = "Print statistics",
-                        action="store_true")
-
-    parser.add_argument("--outputStats", help="Store statistics to the OUTPUTSTATS in JSON format")
-
-    parser.add_argument("--includeCopyright",
-                        help="Enables searching for copyright information in files",
-                        action="store_true")
-
-    parser.add_argument("--filterFiles",
-                        help="Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code files)",
-                        action="store_true")
-
-    parser.add_argument("--pattern",
-                        help="Specify Unix style file name pattern",
-                        action='append')
-
-    parser.add_argument("--upload",
-                        help="Upload to the TrustSource service",
-                        action="store_true")
-
-    parser.add_argument("--projectName", help="Project name")
-
-    parser.add_argument("--moduleName", help="Module name of the scan")
-
-    parser.add_argument("--apiKey", help="Upload to the TrustSource service")
-
-    parser.add_argument("--baseUrl", help="DeepScan service base URL", )
-
-    parser.add_argument("--deepscanBaseUrl", help="TrustSource service base URL", )
-
-    args = parser.parse_args()
-
-    options = AnalyserOptions(includeCopyright=args.includeCopyright,
-                              filterFiles=args.filterFiles,
-                              filePatterns=args.pattern)
+from ts_python_client.client import Client
 
 
-    result, files, stats = execute([Path(p) for p in args.path], options)
-
-    if not result:
-        print('Nothing found')
-
-    elif args.upload:
-        scan = Scan(options=options)
-
-        scan.result = result
-        scan.stats = stats
-
-        scanner = DSScanner(scan, moduleName=args.moduleName, deepscanBaseUrl=args.deepscanBaseUrl)
-        tool = Client('ts-deepscan', scanner)
-
-        tool.run(baseUrl=args.baseUrl,
-                 apiKey=args.apiKey,
-                 projectName=args.projectName,
-                 skipTransfer=False)
+@click.group()
+def cli():
+    pass
 
 
-    elif args.output:
-        with open(args.output, 'w') as fp:
-            fp.write(json.dumps(result, indent=2))
+@cli.command()
+@click.option('-o', '--output',
+              type=click.Path(path_type=pathlib.Path),
+              help='Output path for the results')
+@click.option('-j', '--jobs',
+              default=-1,
+              help='Number of parallel jobs')
+@click.option('--include-copyright',
+              default=False,
+              is_flag=True,
+              help='Enables searching for copyright information in files')
+@click.option('--filter-files',
+              default=False,
+              is_flag=True,
+              help='Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code files)')
+@click.option('--pattern',
+              multiple=True,
+              default=[],
+              help='Specify Unix style file name pattern')
+@click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
+def scan(output: pathlib.Path,
+         jobs: int,
+         include_copyright: bool,
+         filter_files: bool,
+         pattern: List[str],
+         path: pathlib.Path):
+
+    options = AnalyserOptions(includeCopyright=include_copyright,
+                              filterFiles=filter_files,
+                              filePatterns=list(pattern))
+
+    result, no_result, stats = execute(path, jobs, options)
+
+    _scan = Scan(result=result,
+                 no_result =no_result,
+                 stats = stats, # prepare_stats(result, no_result, stats)
+                 options=options)
+    _scan.compute_licenses_compatibility()
+
+    if output:
+        with output.open('w') as fp:
+            fp.write(json.dumps(_scan.to_dict(), indent=2))
     else:
-        print(json.dumps(result, indent=2))
-
-    if args.printStats or args.outputStats:
-        stats = prepare_stats(result, files, stats)
-        stats = json.dumps(stats, indent=2)
-
-        if args.printStats:
-            print(stats)
-        if args.outputStats:
-            with open(args.outputStats, 'w') as fp:
-                fp.write(stats)
+        print(json.dumps(_scan.to_dict(), indent=2))
 
 
 
-def execute(paths: List[Path], options):
-    scanner = FSScanner(paths, get_analysers(), options)
+def execute(path: Path, jobs: int, options: AnalyserOptions):
+    from typing import Optional
+    from progress.bar import Bar
 
-    scan_finished = False
-    scanned_files = []
+    scanner = ParallelScanner(jobs, [path], get_analysers(), options)
 
-    scanner.onFileScanDone = lambda path: scanned_files.append(path)
+    no_result = []
+    def onSuccess(p, r):
+        if not r:
+            no_result.append(p)
 
-    def print_progress(final=False):
-        print('\rScanning... [{}\{}]'.format(scanner.finishedTasks, scanner.totalTasks), end='')
-        if final: print()
+    scanner.onFileScanSuccess = onSuccess
 
-    def update_progress():
-        while not scan_finished:
-            print_progress()
-            time.sleep(2)
+    progress_bar: Optional[Bar] = None
+    def onProgress(finishedTasks: int, totalTasks: int):
+        nonlocal progress_bar
+        if finishedTasks == 0:
+            progress_bar = Bar('Scanning', max=totalTasks)
+        elif progress_bar:
+            progress_bar.next()
 
-    progress = threading.Thread(target=update_progress)
-    progress.start()
+    scanner.onProgress = onProgress
 
     result = scanner.run()
+    progress_bar.finish()
 
-    scan_finished = True
-    progress.join()
-
-    print_progress(final=True)
-
-    return result, scanned_files, {
+    return result, no_result, {
         'total': scanner.totalTasks,
         'finished': scanner.finishedTasks
     }
 
 
-def prepare_stats(result, files, stats):
+def prepare_stats(result, no_result, stats):
     copyrights = {}
     copyrights_info_count = 0
+
+    files = list(result.keys())
+    files += no_result
 
     for path, res in result.items():
         for com in res.get('comments', []):
@@ -162,24 +126,45 @@ def prepare_stats(result, files, stats):
 
 
 
-def get_analysers():
-    import spacy
+###########
 
-    path = config.get_datasetdir()
-    dataset = Dataset(path)
+@cli.command()
+@click.option('--project-name',
+              type=str,
+              required=True,
+              help='Project name')
+@click.option('--module-name',
+              type=str,
+              required=True,
+              help='Module name of the scan')
+@click.option('--api-key',
+              type=str,
+              required=True,
+              help='TrustSource API Key')
+@click.option('--base-url',
+              default='',
+              help='TrustSource API base URL')
+@click.option('--deepscan-base-url',
+              default='',
+              help='DeepScan API base URL')
+@click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
+def upload(project_name: str,
+           module_name: str,
+           api_key: str,
+           base_url: str,
+           deepscan_base_url: str,
+           path: pathlib.Path):
 
-    if not spacy.util.is_package('en_core_web_sm'):
-        spacy.cli.download('en_core_web_sm')
-        print()
+    with path.open('r') as fp:
+        _scan = Scan.from_dict(json.loads(fp.read()))
 
-    if not spacy.util.is_package('en_core_web_sm'):
-        print('Cannot download language model')
-        exit(2)
+    scanner = DSScanner(_scan, moduleName=module_name, deepscanBaseUrl=deepscan_base_url)
+    tool = Client('ts-deepscan', scanner)
 
-    print('Loading dataset...')
-    dataset.load()
-
-    return [LicenseAnalyser(dataset), SourcesAnalyser(dataset)]
+    tool.run(baseUrl=base_url,
+             apiKey=api_key,
+             projectName=project_name,
+             skipTransfer=False)
 
 
 

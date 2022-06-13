@@ -33,8 +33,7 @@ class DSScanner(Scanner):
             'versions': [{
                 'version': '0.0.0',
                 "deepScanId": scan_uid,
-                "deepScanUrl": scan_url,
-                "compatibleLicenses": self._scan.is_compatible_licenses
+                "deepScanUrl": scan_url
             }]
         }
 
@@ -54,7 +53,7 @@ class DSScanner(Scanner):
             'x-api-key': self.client.settings.apiKey
         }
 
-        response = requests.post(url, json=self._scan.__dict__, headers=headers)
+        response = requests.post(url, json=self._scan.to_dict(), headers=headers)
 
         if response.status_code not in range(200, 300):
             print('Status {}: {}'.format(response.status_code, response.text))
