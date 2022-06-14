@@ -5,6 +5,6 @@ nltk
 text-unidecode
 requests
 progress
-click
-#osadl_matrix
+click>=8.0.3
+osadl_matrix
 ts-python-client

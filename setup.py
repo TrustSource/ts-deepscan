@@ -11,7 +11,7 @@ setup(
         'ts_deepscan.scancode',
         'ts_deepscan.scancode.cluecode',
     ],
-    version='1.0.0',
+    version='1.0.1',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -26,7 +26,7 @@ setup(
         'text-unidecode',
         'requests',
         'progress',
-        'click',
+        'click>=8.0.3',
         'osadl_matrix',
         'ts-python-client>=1.2.0'
     ],
