@@ -32,7 +32,7 @@ setup(
     ],
     scripts=['ts-deepscan'],
     entry_points={
-        'console_scripts': ['ts-deepscan=ts_deepscan.cli:main'],
+        'console_scripts': ['ts-deepscan=ts_deepscan.cli:cli'],
     },
     include_package_data=True
 )

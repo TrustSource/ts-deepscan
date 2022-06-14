@@ -1,7 +1,6 @@
-import json
-
 from typing import List
 from datetime import datetime
+from pathlib import Path
 from dataclasses import dataclass, field, asdict
 
 from ..analyser.FileAnalyser import AnalyserOptions
@@ -33,6 +32,17 @@ class Scan(object):
 
         return list(lics)
 
+    @property
+    def root_licenses(self) -> [str]:
+        lics = []
+        for k, v in self.result.items():
+            p = Path(k)
+            if not p.parent or not p.parent.name:
+                lic = v.get('license', None)
+                if lic and 'score' in lic:
+                    lics.append(lic['key'])
+        return lics
+
     def compute_licenses_compatibility(self):
         import osadl_matrix
         lics = self.licenses
@@ -56,7 +66,7 @@ class Scan(object):
 
     def to_dict(self) -> dict:
         d = asdict(self)
-        del d['time']
+        d['time'] = str(d['time'])
         return d
 
 

@@ -28,7 +28,7 @@ class DSScanner(Scanner):
         scan = TSScan(self._moduleName, ns='ds')
         dep = Dependency(key='ds', name=self._moduleName, versions=['0.0.0'])
 
-        dep.licenses = [License(lic) for lic in self._scan.licenses]
+        dep.licenses = [License(lic) for lic in self._scan.root_licenses]
         dep.meta = {
             'versions': [{
                 'version': '0.0.0',
