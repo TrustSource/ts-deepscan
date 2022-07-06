@@ -6,7 +6,9 @@ import hashlib
 import string
 import spacy
 import pathlib
-#import re
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 from spacy.vocab import Vocab
 from spacy.tokens import Doc

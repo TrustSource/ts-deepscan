@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import sys
 import multiprocessing as mp
 
 from typing import List, Tuple, Optional
@@ -11,7 +12,17 @@ from .Scanner import Scanner
 from ..analyser.FileAnalyser import FileAnalyser, AnalyserOptions
 
 
-_ctx = mp.get_context('fork')
+def get_context() -> mp.context.BaseContext:
+    """
+    Return multiprocessing context based on the OS        
+    """
+    if sys.platform != "win32":
+        return mp.get_context('fork')
+    else:
+        return mp.get_context('spawn')
+
+_ctx = get_context()
+
 
 
 class ParallelScanner(Scanner):
