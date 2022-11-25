@@ -12,7 +12,7 @@ We provided also a hosted version with a nice UI, that you can find [here](https
 To learn more about TrustSource - the only process focussed Open Source Compliance tool, which supports all aspects of the open source compliance tool chain - visit our website at https://www.trustsource.io.
 
 ## What it covers? 
-Currently, the tool searches all kind of source files for comments. It covers a wide range of programming languages:
+Currently the tool searches all kind of source files for comments. It covers a wide range of programming languages:
 * AppleScript
 * Assembly
 * Batch
@@ -52,24 +52,26 @@ Currently, the tool searches all kind of source files for comments. It covers a 
 * Yacc 
 * Yaml
 
-In addition, it assesses all LICENSE, COPYING and README named files. Text, respectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense text using a similarity analysis approach. The tool compiles results in a JSON file. 
+In addition it assesses all LICENSE, COPYING and README named files. Text, respectively comments in source files, will be analyzed for copyright statements and licenses will be verified against the original liecense text using a similarity analysis approach. The tool compiles results in a JSON file. 
 
 **PLEASE NOTE: The tool will ignore all kind of image, audio or video files.**
 
 ## How it works? 
+The service is split into two phases with corresponding sub commands: Scan and Uplaod. You will get the flags and options of each using `ts-deepscan scan --help` or `ts-deepscan upload --help`accordingly.
 You may decide upon what to include in the scan. You may want to search for license indications only or also for copyright information. The latter will increase the operations time drastically. 
 The scanning has several phases. It seeks for SPDX license identifiers as well as compares license texts using a similarity analysis.
 For the copyright scaning it has several routines but mainly builds on [ScanCode](https://github.com/nexB/scancode-toolkit "ScanCode Repository") (credits to [Philippe](https://github.com/nexB/scancode-toolkit/commits?author=pombredanne])).
+The results may be stored locally or uploaded to TrustSource. You may associate them with a project and a module. An [API key](https://www.trustsource.io/apikeymgmt) will be required.
 
 ## Where to learn more? 
 DeepScan is the CLI-version of the [TrustSource DeepScan](https://www.trustsource.io/deepscan "DeepScan Webservice UI") service. TrustSource DeepScan is a free repository scanning service operated by [TrustSource](https://www.trustsource.io "TrustSource Website"). To learn more about it and how it works, see the [TrustSource Knowledgebase](https://support.trustsource.io). It is the "Repo-Scanner" part of the OpenChain Reference Tooling. See [here](https://support.trustsource.io/hc/en-us/articles/360012782880-Architecture-Overview "Link to article") for a complete description of the reference model. 
 
 # Getting started / set up
-The tool is realized in Python 3, we recommend to provide at least Python 3.7. To install it you may use pip:
+The tool is realized in python 3, we recommend to provide at least python 3.6. To install it you may use pip:
 ```
 pip install ts-deepscan
 ```
-Currently, we do not support any alterantive installations, but we are planning to provide homebrew shortly.
+Currently we do not support any alterantive installations, but we are planning to provide homebrew shortly.
 To execute a scan, make sure the machine you are using to perform the scan has access to the internet, so that deepscan will be able to laod the latest Update of license data. This requires https (443). We regularly update the license texts. To provide this service, we kindly thank the [SPDX](https://spdx.org)-team. They do the heavy lifting on updating the licenses. 
 ```
 # clone a repo
@@ -83,20 +85,6 @@ In the first run, it will download the license data from this repository. Occasi
 
 # TrustSource DeepScan CLI usage and configuration options
 DeepScan may be used to scan a complete directory or a single file depending on the path argument.
-
-## CLI help
-
-To list all available commands:
-
-```
-ts-deepscan --help
-```
-
-To get help to particular commands:
-
-```
-ts-deepscan <COMMAND> --help
-```
 
 ## Selecting the scan target
 To scan a particular file:
@@ -120,15 +108,6 @@ Default output will be stdout (console). To write in a file instead, use the -o 
 ts-deepscan scan --includeCopyright -o result.json ./ts-deepscan
 ```
 
-## Uploading scan results
-For uploading previously stored scan results (scan executed with the '-o' option) to the TrustSource app use the following command: 
-
-```
-ts-deepscan upload --projectName <YOUR_PROJECT_NAME> --moduleName ts-deepscan --api-key <YOUR_API_KEY>
-```
-
-Note: before uploading scan, a project has to be created in the TrustSource app as well as an API key has to be generated in the TrustSource Account settings  
-
 # Next steps
 On our roadmap we see two capabilities being of relevance:
 
@@ -136,15 +115,15 @@ On our roadmap we see two capabilities being of relevance:
 Given we identified a license text, with a similarity lower than 90%, it is possible that the original license text has been amended. Sometimes authors do add a clause or remove one. In a next version, we plan to outline these deltas. 
 
 ### b) Identify re-use of code
-Currently, each file assessed is hashed, so that we do not need to assess the same file several times. This can be used to identify multiple appearances of the same file across different repositories. 
+Currently each file assessed is hashed, so that we do not need to assess the same file several times. This can be used to identify multiple appearances of the same file across different repositories. 
 
 ### c) Treatment of linked repositories
-In GitHub and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with direct links
+In Github and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with direct links
 
 In case you have specific need for any of the cases mentioned above, feel free to reach out and let us know about your case. If you have additional ideas, feel free to open a feature request in the issues section. 
 
 # Contribution, Contact and Support
-Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues). We'ld love to hear your feedback to learn and improve.
+Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues). We 'ld love o hear your feedback to learn and improve.
 Contributions are welcome. Just clone, create your branch and send a pull request. Please make sure to agree to the [contribution agreement](/org/ContributionAgreeemnt.md "Contribution Agreement") and the [coding guidelines](/org/CodingGuidelines.md "Coding Guidelines").
 
 If you like the tool and want to support our further work, feel free to support us with donations or sign a API-usage agreement.
