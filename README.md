@@ -111,20 +111,20 @@ ts-deepscan scan ./ts-deepscan
 ## Switching copyright collection on/off
 The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--includeCopyright* parameter, e.g.:  
 ```
-ts-deepscan scan --includeCopyright ./ts-deepscan
+ts-deepscan scan --include-copyright ./ts-deepscan
 ```
 
 ## Selecting the output target
 Default output will be stdout (console). To write in a file instead, use the -o option, e.g.:
 ```
-ts-deepscan scan --includeCopyright -o result.json ./ts-deepscan
+ts-deepscan scan --include-copyright -o result.json ./ts-deepscan
 ```
 
 ## Uploading scan results
 For uploading previously stored scan results (scan executed with the '-o' option) to the TrustSource app use the following command: 
 
 ```
-ts-deepscan upload --projectName <YOUR_PROJECT_NAME> --moduleName ts-deepscan --api-key <YOUR_API_KEY>
+ts-deepscan upload --project-name <YOUR_PROJECT_NAME> --module-name ts-deepscan --api-key <YOUR_API_KEY> result.json
 ```
 
 Note: before uploading scan, a project has to be created in the TrustSource app as well as an API key has to be generated in the TrustSource Account settings  
