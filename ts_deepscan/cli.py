@@ -1,30 +1,23 @@
+# SPDX-FileCopyrightText: 2023 EACG GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import sys
-import json
 import click
 import pathlib
 
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
+from .scanner import Scan
+from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
-from .client import DSScanner
-from .scanner.Scan import Scan
-from .scanner.Scanner import *
-from .scanner.ParallelScanner import ParallelScanner
-
-from .analyser import get_default_analysers
-
-from ts_python_client.client import Client
+from ts_python_client.cli import start, scan, upload
 
 
-@click.group()
-def cli():
-    pass
+def main():
+    start()
 
 
-@cli.command()
-@click.option('-o', '--output',
-              type=click.Path(path_type=pathlib.Path),
-              help='Output path for the results')
+
+
 @click.option('-j', '--jobs',
               default=-1 if sys.platform != 'win32' else 1, # Turn off multitasking due to the long spawn on Windows
               help='Number of parallel jobs')
@@ -44,119 +37,16 @@ def cli():
               multiple=True,
               default=[],
               help='Specify Unix style file name pattern')
-@click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
-def scan(output: pathlib.Path,
-         jobs: int,
-         include_copyright: bool,
-         include_crypto: bool,
-         filter_files: bool,
-         pattern: List[str],
-         path: pathlib.Path):
-
-    options = AnalyserOptions(includeCopyright=include_copyright,
-                              filterFiles=filter_files,
-                              filePatterns=list(pattern))
-
-    analysers = get_default_analysers()
-
-    if include_crypto:
-        if sys.platform == 'win32':
-            # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
-            jobs = 1
-
-        try:
-            from .analyser.CryptoAnalyser import CryptoAnalyser
-            analysers.append(CryptoAnalyser())
-        except Exception as err:
-            print('Crypto analyser error: ', err)
-            pass
-
-    result, no_result, stats = execute(path, jobs, analysers, options)
-
-    _scan = Scan(result=result,
-                 no_result =no_result,
-                 stats = stats, # prepare_stats(result, no_result, stats)
-                 options=options)
-    _scan.compute_licenses_compatibility()
-
-    if output:
-        with output.open('w') as fp:
-            fp.write(json.dumps(_scan.to_dict(), indent=2))
-    else:
-        print(json.dumps(_scan.to_dict(), indent=2))
+@scan.impl
+def scan(path: pathlib.Path, *args, **kwargs) -> Scan:
+    scanner = create_scanner(*args, **kwargs)
+    return execute_scan([path], scanner)
 
 
 
-def execute(path: Path, jobs: int, analysers: List[FileAnalyser], options: AnalyserOptions):
-    from typing import Optional
-    from progress.bar import Bar
-
-    if jobs == 1:
-        scanner = Scanner([path], analysers, options)
-    else:
-        scanner = ParallelScanner(jobs, [path], analysers, options)
-
-    no_result = []
-    def onSuccess(p, r):
-        if not r:
-            no_result.append(p)
-
-    scanner.onFileScanSuccess = onSuccess
-
-    progress_bar: Optional[Bar] = None
-    def onProgress(finishedTasks: int, totalTasks: int):
-        nonlocal progress_bar
-        if finishedTasks == 0:
-            progress_bar = Bar('Scanning', max=totalTasks)
-        elif progress_bar:
-            progress_bar.next()
-
-    scanner.onProgress = onProgress
-
-    result = scanner.run()
-    progress_bar.finish()
-
-    return result, no_result, {
-        'total': scanner.totalTasks,
-        'finished': scanner.finishedTasks
-    }
-
-
-def prepare_stats(result, no_result, stats):
-    copyrights = {}
-    copyrights_info_count = 0
-
-    files = list(result.keys())
-    files += no_result
-
-    for path, res in result.items():
-        for com in res.get('comments', []):
-            for cop in com.get('copyright', []):
-                for h in cop.get('holders', []):
-                    copyrights_info_count += 1
-                    if h in copyrights:
-                        copyrights[h].append(path)
-                    else:
-                        copyrights[h] = [path]
-                    files.remove(path)
-
-    stats['copyright_info'] = copyrights_info_count
-    stats['no_copyright_info'] = len(files)
-
-    stats['copyright'] = copyrights
-    copyrights['no_copyright'] = files
-
-    return stats
 
 
 
-###########
-
-@cli.command()
-@click.option('--project-name',
-              type=str,
-              required=True,
-              help='Project name')
 @click.option('--module-name',
               type=str,
               required=True,
@@ -166,29 +56,14 @@ def prepare_stats(result, no_result, stats):
               required=True,
               help='TrustSource API Key')
 @click.option('--base-url',
-              default='',
-              help='TrustSource API base URL')
-@click.option('--deepscan-base-url',
-              default='',
+              default=deepscanBaseUrl,
               help='DeepScan API base URL')
-@click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
-def upload(project_name: str,
-           module_name: str,
-           api_key: str,
-           base_url: str,
-           deepscan_base_url: str,
-           path: pathlib.Path):
-
-    with path.open('r') as fp:
-        _scan = Scan.from_dict(json.loads(fp.read()))
-
-    scanner = DSScanner(_scan, moduleName=module_name, deepscanBaseUrl=deepscan_base_url)
-    tool = Client('ts-deepscan', scanner)
-
-    tool.run(baseUrl=base_url,
-             apiKey=api_key,
-             projectName=project_name,
-             skipTransfer=False)
-
-
-
+@upload.override
+def upload(data: dict, module_name: str, api_key: str, base_url: str):
+    if res := upload_data(data, api_key, module_name, base_url):
+        print("Transfer success!")
+        if url := res[1]:
+            print(f"Results are available at: {url}")
+    else:
+        print('Files scan was not uploaded correctly')
+        exit(2)

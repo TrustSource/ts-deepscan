@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+
 import fnmatch
 
 from pathlib import Path
@@ -13,9 +14,7 @@ from ..analyser.FileAnalyser import *
 class Scanner(object):
     __version = "0.3"
 
-    def __init__(self, paths: [Path], analysers: [FileAnalyser], options: AnalyserOptions=None, *args, **kwargs):
-        self.__paths = paths
-
+    def __init__(self, analysers: [FileAnalyser], options: AnalyserOptions=None, *args, **kwargs):
         self.analysers = analysers
         self.options = options
 
@@ -50,10 +49,10 @@ class Scanner(object):
         return result
 
 
-    def run(self):
+    def run(self, paths: [Path]):
         files: List[Tuple[Path, Path]]  = []
 
-        for p in self.__paths:
+        for p in paths:
             if p.is_file():
                 files.append((p, p.parent))
 
@@ -68,8 +67,12 @@ class Scanner(object):
                             files.append((Path(os.path.join(root, f)), p))
 
         self.totalTasks = len(files)
-        self._notifyProgress()
+        self.finishedTasks = 0
 
+        if self.totalTasks == 0:
+            return {}
+
+        self._notifyProgress()
         return self._do_scan(files)
 
 
