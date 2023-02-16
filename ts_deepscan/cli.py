@@ -1,3 +1,4 @@
+import sys
 import json
 import click
 import pathlib
@@ -9,7 +10,8 @@ from .client import DSScanner
 from .scanner.Scan import Scan
 from .scanner.Scanner import *
 from .scanner.ParallelScanner import ParallelScanner
-from .analyser import get_analysers
+
+from .analyser import get_default_analysers
 
 from ts_python_client.client import Client
 
@@ -24,12 +26,16 @@ def cli():
               type=click.Path(path_type=pathlib.Path),
               help='Output path for the results')
 @click.option('-j', '--jobs',
-              default=-1,
+              default=-1 if sys.platform != 'win32' else 1, # Turn off multitasking due to the long spawn on Windows
               help='Number of parallel jobs')
 @click.option('--include-copyright',
               default=False,
               is_flag=True,
-              help='Enables searching for copyright information in files')
+              help='Enables searching for copyright information in source code files')
+@click.option('--include-crypto',
+              default=False,
+              is_flag=True,
+              help='Enables searching for used cryptographic algorithms in source code files')
 @click.option('--filter-files',
               default=False,
               is_flag=True,
@@ -42,6 +48,7 @@ def cli():
 def scan(output: pathlib.Path,
          jobs: int,
          include_copyright: bool,
+         include_crypto: bool,
          filter_files: bool,
          pattern: List[str],
          path: pathlib.Path):
@@ -50,7 +57,21 @@ def scan(output: pathlib.Path,
                               filterFiles=filter_files,
                               filePatterns=list(pattern))
 
-    result, no_result, stats = execute(path, jobs, options)
+    analysers = get_default_analysers()
+
+    if include_crypto:
+        if sys.platform == 'win32':
+            # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
+            jobs = 1
+
+        try:
+            from .analyser.CryptoAnalyser import CryptoAnalyser
+            analysers.append(CryptoAnalyser())
+        except Exception as err:
+            print('Crypto analyser error: ', err)
+            pass
+
+    result, no_result, stats = execute(path, jobs, analysers, options)
 
     _scan = Scan(result=result,
                  no_result =no_result,
@@ -66,11 +87,14 @@ def scan(output: pathlib.Path,
 
 
 
-def execute(path: Path, jobs: int, options: AnalyserOptions):
+def execute(path: Path, jobs: int, analysers: List[FileAnalyser], options: AnalyserOptions):
     from typing import Optional
     from progress.bar import Bar
 
-    scanner = ParallelScanner(jobs, [path], get_analysers(), options)
+    if jobs == 1:
+        scanner = Scanner([path], analysers, options)
+    else:
+        scanner = ParallelScanner(jobs, [path], analysers, options)
 
     no_result = []
     def onSuccess(p, r):

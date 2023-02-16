@@ -2,16 +2,16 @@ from setuptools import setup
 
 setup(
     name='ts-deepscan',
-    python_requires='>3.6',
+    python_requires='>=3.8',
     packages=[
         'ts_deepscan',
         'ts_deepscan.analyser',
         'ts_deepscan.commentparser',
         'ts_deepscan.scanner',
         'ts_deepscan.scancode',
-        'ts_deepscan.scancode.cluecode',
+        'ts_deepscan.scancode.cluecode'
     ],
-    version='1.0.3',
+    version='1.1.0',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -28,11 +28,14 @@ setup(
         'progress',
         'click>=8.0.3',
         'osadl_matrix',
-        'ts-python-client>=1.2.0'
+        'ts-python-client==1.2.0',
+        'pyminr>=0.1.0'
     ],
     scripts=['ts-deepscan'],
     entry_points={
         'console_scripts': ['ts-deepscan=ts_deepscan.cli:cli'],
     },
-    include_package_data=True
+    setup_requires=[
+        'wheel'
+    ]
 )

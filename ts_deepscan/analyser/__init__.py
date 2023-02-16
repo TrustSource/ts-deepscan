@@ -2,13 +2,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import List
+
 from .Dataset import Dataset
+
+from .FileAnalyser import FileAnalyser
 from .SourcesAnalyser import SourcesAnalyser
 from .LicenseAnalyser import LicenseAnalyser
 
 from ..config import get_datasetdir
 
-def get_analysers():
+def get_default_analysers() -> List[FileAnalyser]:
     import spacy
 
     path = get_datasetdir()

@@ -8,3 +8,4 @@ progress
 click>=8.0.3
 osadl_matrix
 ts-python-client
+pyminr

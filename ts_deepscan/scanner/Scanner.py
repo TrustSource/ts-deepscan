@@ -2,17 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-import logging
 import fnmatch
 
-from .. import config
-
-from typing import List, Tuple, Optional, Callable
 from pathlib import Path
+from typing import List, Tuple, Optional, Callable
 
 from ..analyser.FileAnalyser import *
-from .ScanException import *
 
 
 class Scanner(object):
@@ -56,8 +51,6 @@ class Scanner(object):
 
 
     def run(self):
-        logging.info('Scanner version: {}'.format(Scanner.__version))
-
         files: List[Tuple[Path, Path]]  = []
 
         for p in self.__paths:
@@ -77,16 +70,7 @@ class Scanner(object):
         self.totalTasks = len(files)
         self._notifyProgress()
 
-        try:
-            return self._do_scan(files)
-
-        except ScanException as err:
-            logging.error(err)
-            raise
-
-        except:
-            logging.exception('Internal error')
-            raise InternalScanException
+        return self._do_scan(files)
 
 
     def _do_scan(self, files: List[Tuple[Path, Path]]) -> dict:
