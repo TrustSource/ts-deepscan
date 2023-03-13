@@ -5,12 +5,11 @@
 import sys
 import multiprocessing as mp
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from pathlib import Path
 
 from .Scanner import Scanner
-from ..analyser.FileAnalyser import FileAnalyser, AnalyserOptions
-
+from ..analyser import FileAnalyser
 
 def get_context() -> mp.context.BaseContext:
     """
@@ -38,7 +37,7 @@ class ParallelScanner(Scanner):
         tasksQueue = _ctx.Queue()
         resultsQueue = _ctx.Queue()
 
-        workers = [Worker(tasksQueue, resultsQueue, self.analysers, self.options) for _ in range(self._num_jobs)]
+        workers = [ParallelScanner.Worker(tasksQueue, resultsQueue, self.analysers) for _ in range(self._num_jobs)]
 
         for w in workers:
             w.start()
@@ -68,26 +67,28 @@ class ParallelScanner(Scanner):
         return results
 
 
-class Worker(_ctx.Process):
-    def __init__(self, tasksQueue: _ctx.Queue, resultsQueue: _ctx.Queue, analysers: List[FileAnalyser], options: AnalyserOptions):
-        super().__init__()
+    class Worker(_ctx.Process):
+        def __init__(self, tasksQueue: _ctx.Queue, resultsQueue: _ctx.Queue, analysers: List[FileAnalyser]):
+            super().__init__()
 
-        self._tasksQueue = tasksQueue
-        self._resultsQueue = resultsQueue
+            self._tasksQueue = tasksQueue
+            self._resultsQueue = resultsQueue
 
-        self._analysers = analysers
-        self._options = options
+            self._analysers = analysers
 
-    def run(self) -> None:
-        while True:
-            path, rootpath = self._tasksQueue.get()
-            relpath = str(path.relative_to(rootpath))
+        def run(self) -> None:
+            while True:
+                path, root = self._tasksQueue.get()
+                relpath = str(path.relative_to(root) if root else path)
 
-            try:
-                result = relpath, Scanner.scan_file(path, self._analysers, self._options), None
+                try:
+                    result = relpath, Scanner._scan_file(path, self._analysers), None
 
-            except Exception as err:
-                result = relpath, {}, err
+                except Exception as err:
+                    result = relpath, {}, err
 
-            self._resultsQueue.put(result)
+                self._resultsQueue.put(result)
+
+
+
 

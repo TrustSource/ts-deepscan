@@ -1,5 +1,7 @@
 import pyminr
 
+from pathlib import Path
+
 from ..analyser import FileAnalyser
 from ..commentparser.language import Lang, classify
 
@@ -12,10 +14,17 @@ class CryptoAnalyser(FileAnalyser):
     def __del__(self):
         pyminr.clean_crypto_definitions()
 
-    def match(self, path, opts):
+    def _match(self, path: Path):
         return classify(path) != Lang.Unknown
 
-    def analyse(self, path, opts):
+    @property
+    def options(self) -> dict:
+        # TODO: rename 'includeCrypto' -> 'include_crypto'
+        return {
+            'includeCrypto': True
+        }
+
+    def analyse(self, path: Path):
         result = []
 
         def _report_result(algorithm, coding):
@@ -25,7 +34,6 @@ class CryptoAnalyser(FileAnalyser):
             })
 
         with path.open('rb') as fp:
-            src = fp.read()
-            pyminr.find_crypto_algorithms(src, _report_result)
+            pyminr.find_crypto_algorithms(fp.read(), _report_result)
 
         return result

@@ -2,23 +2,36 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Optional, Iterable
+from pathlib import Path
+
+from . import FileAnalyser
+from .Dataset import Dataset
+from .textutils import analyse_text, analyse_license_text
+
 from ..commentparser import Comment, extract_comments
 from ..commentparser.language import Lang, classify
-from .FileAnalyser import FileAnalyser
-from .textutils import *
 
 
-class SourcesAnalyser(FileAnalyser):
+class CommentAnalyser(FileAnalyser):
     category_name = 'comments'
 
-    def __init__(self, dataset):
+    def __init__(self, dataset: Dataset, include_copyright = False):
         self.dataset = dataset
+        self.include_copyright = include_copyright
 
-
-    def match(self, path, opts):
+    def _match(self, path: Path) -> bool:
         return classify(path) != Lang.Unknown
 
-    def analyse(self, path, opts):
+    @property
+    def options(self) -> dict:
+        # TODO: add categorization of options: 'include_copyright' -> 'comments.include_copyright'
+        # TODO: rename 'includeCopyright' -> 'include_copyright'
+        return {
+            'includeCopyright': self.include_copyright
+        }
+
+    def analyse(self, path: Path) -> Optional[list]:
         with path.open(errors="surrogateescape") as fp:
             content = fp.read()
             comments = extract_comments(content, classify(path))
@@ -37,7 +50,7 @@ class SourcesAnalyser(FileAnalyser):
 
                 merged.append(cur)
                 results = []
-                for res in self.analyse_comments(merged, opts):
+                for res in self.__analyse_comments(merged):
                     results.append(res)
 
                 if len(results) > 0:
@@ -46,10 +59,10 @@ class SourcesAnalyser(FileAnalyser):
         return None
 
 
-    def analyse_comments(self, comments, opts):
+    def __analyse_comments(self, comments) -> Iterable[dict]:
         if len(comments) > 0:
             head, *tail = comments
-            res = analyse_license_text(head.text, self.dataset, opts)
+            res = analyse_license_text(head.text, self.dataset, search_copyright=self.include_copyright)
             if res:
                 res['line'] = head.startLine
                 res['endLine'] = head.endLine
@@ -58,7 +71,7 @@ class SourcesAnalyser(FileAnalyser):
                 yield res
 
         for c in comments:
-            res = analyse_text(c.text, self.dataset, opts)
+            res = analyse_text(c.text, self.dataset, search_copyright=self.include_copyright)
             if res:
                 res['line'] = c.startLine
                 res['endLine'] = c.endLine

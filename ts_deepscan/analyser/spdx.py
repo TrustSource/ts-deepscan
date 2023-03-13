@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import List, Union, Optional
+
 class SpdxParseError(Exception):
     pass
 
@@ -31,8 +33,8 @@ class SpdxLic:
 def parse_spdx_expr(expr):
     expr = expr.strip()
 
-    ops = [None]
-    stack = []
+    ops: List[Optional[SpdxOp]] = [None]
+    stack: List[Union[SpdxLic, str]] = []
 
     pos = 0
     prev = 0

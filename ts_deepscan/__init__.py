@@ -7,31 +7,34 @@ import requests
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+from .config import get_datasetdir
 
 from .scanner import Scan
 from .scanner.Scanner import *
 from .scanner.ParallelScanner import ParallelScanner
-from .analyser import get_default_analysers
+
+from .analyser import FileAnalyser
+from .analyser.Dataset import Dataset
+
+from .analyser.CommentAnalyser import CommentAnalyser
+from .analyser.LicenseAnalyser import LicenseAnalyser
 
 
-def create_scanner(jobs: int = -1,
-                   include_copyright: bool = False,
-                   include_crypto: bool = False,
-                   filter_files: bool = False,
-                   pattern: Optional[List[str]] = None) -> Scanner:
+def __load_spacy_package():
+    import spacy
 
-    pattern = [] if pattern is None else pattern
-    opts = AnalyserOptions(includeCopyright=include_copyright,
-                           filterFiles=filter_files,
-                           filePatterns=pattern)
+    if not spacy.util.is_package('en_core_web_sm'):
+        spacy.cli.download('en_core_web_sm')
+        print()
 
-    analysers = get_default_analysers()
+    if not spacy.util.is_package('en_core_web_sm'):
+        print('Cannot download language model')
+        exit(2)
 
+
+def create_default_analysers(dataset: Dataset, include_copyright: bool = False, include_crypto: bool = False) -> List[FileAnalyser]:
+    analysers = [LicenseAnalyser(dataset, include_copyright), CommentAnalyser(dataset, include_copyright)]
     if include_crypto:
-        if sys.platform == 'win32':
-            # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
-            jobs = 1
-
         try:
             from .analyser.CryptoAnalyser import CryptoAnalyser
             analysers.append(CryptoAnalyser())
@@ -39,7 +42,29 @@ def create_scanner(jobs: int = -1,
             print('Crypto analyser error: ', err)
             pass
 
-    return ParallelScanner(jobs, analysers, opts)
+    return analysers
+
+
+def create_scanner(jobs: int = -1,
+                   include_copyright: bool = False,
+                   include_crypto: bool = False,
+                   ignore_pattern: tuple = tuple()) -> Scanner:
+
+    if sys.platform == 'win32':
+        # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
+        jobs = 1
+
+    __load_spacy_package()
+
+    path = get_datasetdir()
+    dataset = Dataset(path)
+
+    print('Loading dataset...')
+    dataset.load()
+
+    analysers = create_default_analysers(dataset, include_copyright, include_crypto)
+    return ParallelScanner(jobs, analysers,
+                           ignore_patterns=list(ignore_pattern))
 
 
 

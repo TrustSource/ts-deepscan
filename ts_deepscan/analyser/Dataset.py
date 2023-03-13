@@ -5,8 +5,6 @@
 import json
 import shutil
 
-from . import textutils
-
 from pathlib import Path
 
 class Dataset(object):
@@ -15,11 +13,12 @@ class Dataset(object):
         self.__datasetpath = self.__path / 'dataset.json'
 
         self.__data = None
-        self.__score_threshold = 0.8
-
 
     @property
     def data(self):
+        if not self.__data:
+            raise Exception('Dataset is not loaded.')
+
         return self.__data
 
 
@@ -49,48 +48,16 @@ class Dataset(object):
 
 
     def load(self, rebuildcache=False):
+        from .textutils import create_doc
+
         if not self.__data:
             self.preload(rebuildcache)
 
         for _, val in self.__data.items():
             docpath = val['path']
-            doc = textutils.create_doc()
+            doc = create_doc()
             doc.from_disk(docpath)
             val['doc'] = doc
-
-
-
-    def find_match(self, text):
-        if not self.__data:
-            raise Exception('Dataset is not loaded.')
-
-        doc = textutils.create_doc(text)
-        if not doc:
-            return None, None
-
-        hsh = textutils.compute_hash(doc)
-
-        # Compare hashes
-        for key, val in self.__data.items():
-            if hsh == val['hash']:
-                return key, 1.0
-
-
-        lic = None
-        score = 0.0
-
-        # Compute similarity scores
-        for key, val in self.__data.items():
-            doc2 = val['doc']
-            similarity = textutils.compute_similarity(doc, doc2)
-            if similarity > score:
-                score = similarity
-                lic = key
-
-        if score >= self.__score_threshold:
-            return lic, score
-        else:
-            return None, None
 
 
     def _build(self):
@@ -119,12 +86,13 @@ class Dataset(object):
 
 
     def _build_entry(self, key, text):
+        from .textutils import create_doc, compute_hash
         docpath = self.__path / '{}.bin'.format(key)
 
-        doc = textutils.create_doc(text)
+        doc = create_doc(text)
         doc.to_disk(docpath)
 
         return {
             'path': str(docpath),
-            'hash': textutils.compute_hash(doc)
+            'hash': compute_hash(doc)
         }

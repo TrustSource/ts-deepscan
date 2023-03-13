@@ -2,31 +2,28 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
+from typing import Any, Optional
+from abc import ABC, abstractmethod
+from pathlib import Path
 
-from .Dataset import Dataset
+class FileAnalyser(ABC):
+    def __call__(self, path: Path):
+        return self.analyse(path) if self.accepts(path) else None
 
-from .FileAnalyser import FileAnalyser
-from .SourcesAnalyser import SourcesAnalyser
-from .LicenseAnalyser import LicenseAnalyser
+    @abstractmethod
+    def _match(self, path: Path) -> bool:
+        raise NotImplementedError()
 
-from ..config import get_datasetdir
+    @abstractmethod
+    def analyse(self, path: Path) -> Optional[Any]:
+        raise NotImplementedError()
 
-def get_default_analysers() -> List[FileAnalyser]:
-    import spacy
+    @property
+    def options(self) -> dict:
+        return {}
 
-    path = get_datasetdir()
-    dataset = Dataset(path)
-
-    if not spacy.util.is_package('en_core_web_sm'):
-        spacy.cli.download('en_core_web_sm')
-        print()
-
-    if not spacy.util.is_package('en_core_web_sm'):
-        print('Cannot download language model')
-        exit(2)
-
-    print('Loading dataset...')
-    dataset.load()
-
-    return [LicenseAnalyser(dataset), SourcesAnalyser(dataset)]
+    def accepts(self, path: Path) -> bool:
+        if path.is_file() and self._match(path):
+            return True
+        else:
+            return False

@@ -9,17 +9,15 @@ from dataclasses import dataclass, field, asdict
 
 from ts_python_client.commands.ScanCommand import Scan as TSScan
 
-from ..analyser.FileAnalyser import AnalyserOptions
-
 
 @dataclass
 class Scan(TSScan):
     result: dict = field(default_factory=lambda: {})
     no_result: list = field(default_factory=lambda: [])
+    options: dict = field(default_factory=lambda: {})
     stats: dict = field(default_factory=lambda: {})
     incompatible_licenses: list = field(default_factory=lambda: [])
     time: datetime = datetime.now()
-    options: AnalyserOptions = AnalyserOptions()
 
     @property
     def licenses(self) -> List[str]:
@@ -66,9 +64,9 @@ class Scan(TSScan):
         return Scan(
             result = data.get('result', {}),
             no_result = data.get('no_result', []),
+            options=data.get('options', {}),
             stats = data.get('stats', {}),
-            incompatible_licenses=data.get('incompatible_licenses', []),
-            options=AnalyserOptions.from_dict(data.get('options', {}))
+            incompatible_licenses=data.get('incompatible_licenses', [])
         )
 
     def to_dict(self) -> dict:

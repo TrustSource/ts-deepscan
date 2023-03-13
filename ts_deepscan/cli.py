@@ -2,19 +2,21 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import sys
 import click
 import pathlib
 
+from typing import List
+
 from .scanner import Scan
 from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
-from ts_python_client.cli import start, scan, upload
+from ts_python_client.cli import start, scan
 
 
 def main():
     start()
-
 
 
 
@@ -29,24 +31,21 @@ def main():
               default=False,
               is_flag=True,
               help='Enables searching for used cryptographic algorithms in source code files')
-@click.option('--filter-files',
-              default=False,
-              is_flag=True,
-              help='Only scan files based on commonly used names (LICENSE, README, etc.) and extensions (source code files)')
-@click.option('--pattern',
+@click.option('--ignore-pattern',
+              type = str,
               multiple=True,
-              default=[],
-              help='Specify Unix style file name pattern')
+              required=False,
+              help='Unix filename pattern for files that has to be ignored during a scan')
+
 @scan.impl
-def scan(path: pathlib.Path, *args, **kwargs) -> Scan:
+def scan(paths: List[pathlib.Path], *args, **kwargs) -> Scan:
     scanner = create_scanner(*args, **kwargs)
-    return execute_scan([path], scanner)
+    return execute_scan(paths, scanner)
 
 
 
 
-
-
+@start.command
 @click.option('--module-name',
               type=str,
               required=True,
@@ -58,8 +57,11 @@ def scan(path: pathlib.Path, *args, **kwargs) -> Scan:
 @click.option('--base-url',
               default=deepscanBaseUrl,
               help='DeepScan API base URL')
-@upload.override
-def upload(data: dict, module_name: str, api_key: str, base_url: str):
+@click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
+def upload(module_name: str, api_key: str, base_url: str, path: pathlib.Path,):
+    with path.open('r') as fp:
+        data = json.load(fp)
+
     if res := upload_data(data, api_key, module_name, base_url):
         print("Transfer success!")
         if url := res[1]:
