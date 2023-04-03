@@ -54,6 +54,15 @@ def create_scanner(jobs: int = -1,
         # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
         jobs = 1
 
+    dataset = create_dataset()
+    analysers = create_default_analysers(dataset, include_copyright, include_crypto)
+
+    return ParallelScanner(num_jobs=jobs,
+                           analysers=analysers,
+                           ignore_patterns=list(ignore_pattern))
+
+
+def create_dataset():
     __load_spacy_package()
 
     path = get_datasetdir()
@@ -62,10 +71,7 @@ def create_scanner(jobs: int = -1,
     print('Loading dataset...')
     dataset.load()
 
-    analysers = create_default_analysers(dataset, include_copyright, include_crypto)
-    return ParallelScanner(jobs, analysers,
-                           ignore_patterns=list(ignore_pattern))
-
+    return dataset
 
 
 def execute_scan(paths: [Path], _scanner: Scanner, title = '') -> Scan:
