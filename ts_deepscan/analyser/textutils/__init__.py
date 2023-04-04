@@ -15,9 +15,9 @@ from pathlib import Path
 from spacy.vocab import Vocab
 from spacy.tokens import Doc
 
-from .spdx import parse_spdx_expr
-from ..scancode.cluecode.copyrights import detect_copyrights
-from ..analyser.Dataset import Dataset
+from ..spdx import parse_spdx_expr
+from ...scancode.cluecode.copyrights import detect_copyrights
+from ...analyser.Dataset import Dataset
 
 __nlp = None
 
