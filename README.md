@@ -7,7 +7,7 @@ Repository scanner for the identification of *_effective licenses and copyright 
 ## What it does? 
 DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All *findings* will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
 
-We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is available for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been setup to support many and large repositories. If you are interested in using it from within your CI/CD pipeline, we offer API-subscriptions.
+We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is available for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been set up to support many and large repositories. If you are interested in using it from within your CI/CD pipeline, we offer API-subscriptions.
 
 To learn more about TrustSource - the only process focussed Open Source Compliance tool, which supports all aspects of the open source compliance tool chain - visit our website at https://www.trustsource.io.
 
@@ -109,15 +109,35 @@ ts-deepscan scan ./ts-deepscan
 ```
 
 ## Switching copyright collection on/off
-The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--includeCopyright* parameter, e.g.:  
+The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--include-copyright* parameter, e.g.:  
 ```
 ts-deepscan scan --include-copyright ./ts-deepscan
+```
+
+## Switching detection of used cryptographic algorithms on/off
+If you want to turn on the search for used cryptographic algorithms in source code files (based on ScanOSS detection algorithms), you must inlcude the *--include-crypto* parameter, e.g.:  
+```
+ts-deepscan scan --include-crypto ./ts-deepscan
 ```
 
 ## Selecting the output target
 Default output will be stdout (console). To write in a file instead, use the -o option, e.g.:
 ```
 ts-deepscan scan --include-copyright -o result.json ./ts-deepscan
+```
+
+## Exclude files from analysis
+If you want to exclude files from analysis while scanning directories, you can specify one or more ignore file patterns using the *--ignore-pattern* option, e.g. the following command 
+```
+ts-deepscan scan --ignore-pattern "*.pyc" -o result.json ./ts-deepscan
+```
+scans the directory 'ts-deepscan' and exludes all Python compiled files with an extension "pyc" from the analysis.  
+
+## Number of parallel jobs
+The default is to use the maximal number of availbale CPU cores (cpu_count - 1) on Unix based systems and one core on Windows (due to slow process forking), if you want to specify the number of parallel jobs manually, you can use *-j* option, e.g.
+
+```
+ts-deepscan scan -j 4 -o result.json ./ts-deepscan
 ```
 
 ## Uploading scan results
@@ -147,5 +167,5 @@ In case you have specific need for any of the cases mentioned above, feel free t
 Feel free to reach out to the [TrustSource Team](https://support.trustsource.io/hc/en-us/requests/new "TrustSource Knowledgebase") by dropping us a message or providing [issues](/org/ts-deepscan/issues). We'ld love to hear your feedback to learn and improve.
 Contributions are welcome. Just clone, create your branch and send a pull request. Please make sure to agree to the [contribution agreement](/org/ContributionAgreeemnt.md "Contribution Agreement") and the [coding guidelines](/org/CodingGuidelines.md "Coding Guidelines").
 
-If you like the tool and want to support our further work, feel free to support us with donations or sign a API-usage agreement.
+If you like the tool and want to support our further work, feel free to support us with donations or sign an API-usage agreement.
 Thank you & best regards!
