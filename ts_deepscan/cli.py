@@ -12,12 +12,13 @@ from typing import List
 from .scanner import Scan
 from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
-from ts_python_client.cli import start, scan
+from ts_python_client.cli import get_start_cmd, scan
 
+
+start = get_start_cmd(version='2.0.3')
 
 def main():
     start()
-
 
 
 @click.option('-j', '--jobs',
