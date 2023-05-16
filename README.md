@@ -144,7 +144,7 @@ ts-deepscan scan -j 4 -o result.json ./ts-deepscan
 For uploading previously stored scan results (scan executed with the '-o' option) to the TrustSource app use the following command: 
 
 ```
-ts-deepscan upload --project-name <YOUR_PROJECT_NAME> --module-name ts-deepscan --api-key <YOUR_API_KEY> result.json
+ts-deepscan upload --module-name ts-deepscan --api-key <YOUR_API_KEY> result.json
 ```
 
 Note: before uploading scan, a project has to be created in the TrustSource app as well as an API key has to be generated in the TrustSource Account settings  
