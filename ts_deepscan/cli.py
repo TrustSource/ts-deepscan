@@ -63,7 +63,7 @@ def upload(module_name: str, api_key: str, base_url: str, path: pathlib.Path,):
     with path.open('r') as fp:
         data = json.load(fp)
 
-    if res := upload_data(data, api_key, module_name, base_url):
+    if res := upload_data(data, module_name, api_key, base_url):
         print("Transfer success!")
         if url := res[1]:
             print(f"Results are available at: {url}")
