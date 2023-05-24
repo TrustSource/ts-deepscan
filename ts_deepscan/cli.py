@@ -15,7 +15,7 @@ from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 from ts_python_client.cli import get_start_cmd, scan
 
 
-start = get_start_cmd(version='2.0.3')
+start = get_start_cmd(version='2.0.5')
 
 def main():
     start()
