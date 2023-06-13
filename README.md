@@ -107,6 +107,11 @@ To scan a complete directory:
 ```
 ts-deepscan scan ./ts-deepscan
 ```
+You may use a piped command in combination with ```xargs``` to select only files matching a particular pattern:
+```
+find packages -type f -print | grep "linkedin" | xargs ts-deepscan scan -o somefile.json
+```
+The above command will check the directory `packages`and filter the list of file names for `linkedin`. This is then converted by xargs into parameters and added to the ts-deepscan command. 
 
 ## Switching copyright collection on/off
 The default is to scan for license indicators only. If you also want to invest into the costly search for copyright infromation, you must inlcude the *--include-copyright* parameter, e.g.:  
