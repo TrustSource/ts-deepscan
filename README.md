@@ -2,12 +2,12 @@
 ![License](https://img.shields.io/badge/License-Apache--2.0-green)
 
 # TrustSource DeepScan 
-Repository scanner for the identification of *_effective licenses and copyright information_*. 
+Repository scanner for the identification of *_effective licenses, copyright information and identiifcation of encryption algorithms_*. 
 
 ## What it does? 
 DeepScan takes the URL of a git repository as input, clones the content and scans all files contained (see below) for license indicators and copyright comments. All *findings* will be returned in a hirarchical structure (including references) and the cloned repo will be deleted afterwards. 
 
-We provided also a hosted version with a nice UI, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is available for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories. It has been set up to support many and large repositories. If you are interested in using it from within your CI/CD pipeline, we offer API-subscriptions.
+We provided also a hosted version with a nice UI to review the findings, that you can find [here](https://deepscan.trustsource.io "Link to DeepScan Service"). The hosted version is available for free through the Web-UI. It is also part of the subscription based [TrustSource](https://app.trustsource.io)-Service. This version allows in addition the cloning and scanning of private repositories and (new!) the chained processing of complete SBOMs. It has been set up to support many and large repositories. If you are interested in using it from within your CI/CD pipeline, we offer API-subscriptions.
 
 To learn more about TrustSource - the only process focussed Open Source Compliance tool, which supports all aspects of the open source compliance tool chain - visit our website at https://www.trustsource.io.
 
@@ -82,7 +82,7 @@ If you omit the -o parameter, the tool will use standard out as default. For fur
 In the first run, it will download the license data from this repository. Occasionlaly we update the file. Original data is provided by SPDX org.
 
 # TrustSource DeepScan CLI usage and configuration options
-DeepScan may be used to scan a complete directory or a single file depending on the path argument.
+DeepScan may be used to scan a complete directory or a single file depending on the path argument. Pleaase note! we have split the scanning and uploading into two steps. thus you may scan and export the results locally instead of uploading the findigs directly to TrustSource. The formats supported are SPDX and CycloneDX.
 
 ## CLI help
 
@@ -157,14 +157,17 @@ Note: before uploading scan, a project has to be created in the TrustSource app 
 # Next steps
 On our roadmap we see two capabilities being of relevance:
 
-### a) Identify license deltas
-Given we identified a license text, with a similarity lower than 90%, it is possible that the original license text has been amended. Sometimes authors do add a clause or remove one. In a next version, we plan to outline these deltas. 
+### a) Identify re-use of code
+Already now, each file assessed is hashed, so that we do not need to assess the same file several times. This feature can be used to identify multiple appearances of the same file across different repositories. The subscription based implementation already has this capability. However, to resolve this reuirement, additional services are required. These we have provided in the context of the managed solution, e.g. storage of results, indexing, query, search and reply. DeepScan is set to support this scenario but will not further be extended on this. 
 
-### b) Identify re-use of code
-Currently, each file assessed is hashed, so that we do not need to assess the same file several times. This can be used to identify multiple appearances of the same file across different repositories. 
+### b) Identification of malicious pattern
+One of the next steps will be to add support for the identification of malicious or weak programming patterns to help protecting the inbound supply chain. 
 
 ### c) Treatment of linked repositories
-In GitHub and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with direct links
+In GitHub and other git derivatives it is possible to link a repository into your repository. The current version is treating these repositories as local code, which leads to difficulties with deep linking the original files. If there is higher demand to resolve this, we could invest into that direction. 
+
+### d) Identify license deltas
+Given we identified a license text, with a similarity lower than 90%, it is possible that the original license text has been amended. Sometimes authors do add a clause or remove one. In a next version, we plan to outline these deltas. However, our analysis did show, that deviations typically require manual intervention for further analysis. That is, why we skipped activity in that direction for now.
 
 In case you have specific need for any of the cases mentioned above, feel free to reach out and let us know about your case. If you have additional ideas, feel free to open a feature request in the issues section. 
 
