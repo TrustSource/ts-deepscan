@@ -12,7 +12,7 @@ setup(
         'ts_deepscan.scancode',
         'ts_deepscan.scancode.cluecode'
     ],
-    version='2.0.5',
+    version='2.0.6',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -22,14 +22,14 @@ setup(
     classifiers=[],
     install_requires=[
         'six',
-        'spacy>=2.2.0,<3.0.0',
+        'spacy==3.6.0',
         'nltk',
         'text-unidecode',
         'requests',
         'progress',
         'osadl_matrix',
         'ts-python-client>=2.0.4',
-        'pyminr>=0.1.0'
+        'pyminr>=0.1.1'
     ],
     scripts=['ts-deepscan'],
     entry_points={

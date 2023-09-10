@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+import json
 import requests
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
+import gzip
 
 from .config import get_datasetdir
 
@@ -20,7 +22,7 @@ from .analyser.CommentAnalyser import CommentAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
 
 
-def __load_spacy_package():
+def __load_spacy_models():
     import spacy
 
     if not spacy.util.is_package('en_core_web_sm'):
@@ -63,12 +65,9 @@ def create_scanner(jobs: int = -1,
 
 
 def create_dataset():
-    __load_spacy_package()
-
     path = get_datasetdir()
-    dataset = Dataset(path)
 
-    print('Loading dataset...')
+    dataset = Dataset(path)
     dataset.load()
 
     return dataset
@@ -146,26 +145,37 @@ def prepare_stats(result, no_result, stats):
 
 deepscanBaseUrl = 'https://api.prod.trustsource.io/deepscan'
 
+__DIRECT_UPLOAD_SIZE_LIMIT = 500 * 1024 # 500KB: Upload limit without an intermediate storage
+
 def upload_data(data: dict, module_name: str, api_key: str, base_url = deepscanBaseUrl) -> Optional[Tuple[str, str]]:
-    url = '{}/upload-results?module={}'.format(base_url, module_name)
+    params = {
+        'module': module_name
+    }
+
     headers = {
-        'Accept': 'application/json',
         'Content-Type': 'application/json',
         'User-Agent': 'ts-deepscan/1.0.0',
         'x-api-key': api_key
     }
 
-    response = requests.post(url, json=data, headers=headers)
+    data = bytes(json.dumps(data), 'utf-8')
+    compressed = gzip.compress(data)
 
-    if response.status_code not in range(200, 300):
-        print('Status {}: {}'.format(response.status_code, response.text))
+    if len(data) <= __DIRECT_UPLOAD_SIZE_LIMIT:
+        headers['Content-Encoding'] = 'gzip'
+        resp = requests.post(f'{base_url}/upload-results', data=compressed, headers=headers, params=params)
+    else:
+        resp = _upload_with_request(compressed, headers=headers, params=params, base_url=base_url)
+
+    if resp.status_code not in range(200, 300):
+        print(f'Status {resp.status_code}: {resp.text}')
         exit(2)
 
     try:
-        response = response.json()
+        resp = resp.json()
 
-        uid = response.get('uid', '')
-        url = response.get('url', '')
+        uid = resp.get('uid', '')
+        url = resp.get('url', '')
 
         if uid:
             return uid, url
@@ -175,3 +185,25 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url = deepscanB
         print(err)
 
     return None
+
+
+def _upload_with_request(data: bytes, headers: dict, params: dict, base_url = deepscanBaseUrl) -> requests.Response:
+    resp = requests.get(f'{base_url}/request-upload', headers=headers)
+
+    if resp.status_code not in range(200, 300):
+        print(f'Requesting upload failed. Code {resp.status_code}: {resp.text}')
+        exit(2)
+
+    resp = resp.json()
+
+    if (upload_url := resp.get('upload_url', None)) and (uid := resp.get('uid', None)):
+        resp = requests.put(upload_url, data=data)
+        if resp.status_code not in range(200, 300):
+            print(f'Storage upload failed. Code {resp.status_code}: {resp.text}')
+            exit(2)
+
+        return requests.post(f'{base_url}/upload-results', json={'uid': uid}, headers=headers, params=params)
+
+    else:
+        print('Requesting upload failed. No upload URL provided by the server')
+        exit(2)

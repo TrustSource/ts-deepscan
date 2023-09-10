@@ -15,7 +15,7 @@ def get_tempdir() -> Path:
 
 def get_datasetdir(createIfNotExist=True):
     dirpath = os.getenv('TS_DEEPSCAN_DATASET_DIR', None)
-    dirpath = Path(dirpath) if dirpath else get_tempdir()/'ts-deepscan/dataset'
+    dirpath = Path(dirpath) if dirpath else get_tempdir()/'ts-deepscan'
 
     if not dirpath.exists() and createIfNotExist:
         dirpath.mkdir(0o744, parents=True, exist_ok=True)

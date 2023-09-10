@@ -8,18 +8,11 @@ from ..commentparser.language import Lang, classify
 class CryptoAnalyser(FileAnalyser):
     category_name = 'crypto'
 
-    def __init__(self):
-        pyminr.load_crypto_definitions()
-
-    def __del__(self):
-        pyminr.clean_crypto_definitions()
-
     def _match(self, path: Path):
         return classify(path) != Lang.Unknown
 
     @property
     def options(self) -> dict:
-        # TODO: rename 'includeCrypto' -> 'include_crypto'
         return {
             'includeCrypto': True
         }

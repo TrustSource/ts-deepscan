@@ -8,6 +8,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.6] - 2023-09-08
+### Changed Features
+    * Large files upload
+    * Switched to the latest major version of the spaCy (3.x) library
+    * Add support to scan archives
+    * Reduce licenses dataset size
+
 ## [2.0.5] - 2023-05-25
 ### Changed Features
     * Update to the latest 'ts-python-client' (2.0.4)

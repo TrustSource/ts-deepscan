@@ -27,3 +27,12 @@ class FileAnalyser(ABC):
             return True
         else:
             return False
+
+
+class TextFileAnalyser(FileAnalyser, ABC):
+    def _match(self, path: Path) -> bool:
+        try:
+            with path.open('r', encoding='utf-8') as _:
+                return True
+        except UnicodeDecodeError:
+            return False

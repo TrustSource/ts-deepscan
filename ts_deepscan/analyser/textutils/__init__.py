@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import typing as t
+
 import hashlib
 import string
 import spacy
@@ -13,7 +15,7 @@ from typing import Optional, Iterable
 from pathlib import Path
 
 from spacy.vocab import Vocab
-from spacy.tokens import Doc
+from spacy.tokens import Doc, Token
 
 from ..spdx import parse_spdx_expr
 from ...scancode.cluecode.copyrights import detect_copyrights
@@ -25,8 +27,10 @@ def create_doc(text: str = '') -> Optional[Doc]:
     global __nlp
 
     if not __nlp:
-        #        nlp = spacy.load('en')
-        __nlp = spacy.load('en_core_web_sm')
+        __nlp = spacy.blank('en')
+
+        #__nlp = spacy.load('en')
+        #__nlp = spacy.load('en_core_web_sm')
 
     if text:
         try:
@@ -38,25 +42,24 @@ def create_doc(text: str = '') -> Optional[Doc]:
         return Doc(Vocab())
 
 
-def compute_hash(doc: Doc) -> str:
-    hashwords = [t.text for t in doc if not (t.is_space or t.is_punct)]
-    hashstr = ' '.join(hashwords)
-    return hashlib.md5(hashstr.encode('utf-8')).hexdigest()
+def word_tokens_from_doc(doc: Doc) -> t.Iterable[Token]:
+    return (t for t in doc if not (t.is_space or t.is_punct))
 
+def similarity_tokens_from_doc(doc: Doc) -> t.Iterable[Token]:
+    #return (t for t in word_tokens_from_doc(doc) if not t.is_stop)
+    return word_tokens_from_doc(doc)
+
+
+def compute_hash(doc: Doc) -> str:
+    from functools import reduce
+    orths = (t.orth for t in word_tokens_from_doc(doc))
+    words = reduce(lambda res, i: res + i.to_bytes(8, byteorder='big'), orths, bytes())
+    return hashlib.md5(words).hexdigest()
 
 def compute_file_hash(path: Path) -> str:
     with path.open() as fp:
         content = fp.read()
         return hashlib.md5(content.encode('utf-8')).hexdigest()
-
-
-def compute_similarity(doc1: Doc, doc2: Doc) -> float:
-    w1 = {t.orth for t in doc1 if not (t.is_space or t.is_punct)}
-    w2 = {t.orth for t in doc2 if not (t.is_space or t.is_punct)}
-
-    score = float(2 * len(w1.intersection(w2))) / (len(w1) + len(w2))
-
-    return score
 
 
 # def extract_copyright(text):
@@ -190,10 +193,14 @@ def find_match(text: str, dataset: Dataset):
     lic = None
     score = 0.0
 
+    w1 = {t.orth for t in similarity_tokens_from_doc(doc)}
+
     # Compute similarity scores
     for key, val in dataset.data.items():
-        doc2 = val['doc']
-        similarity = compute_similarity(doc, doc2)
+        w2 = set(val['orths'])
+
+        similarity = float(2 * len(w1.intersection(w2))) / (len(w1) + len(w2))
+
         if similarity > score:
             score = similarity
             lic = key
