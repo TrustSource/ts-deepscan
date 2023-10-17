@@ -17,7 +17,7 @@ class Scan(TSScan):
     options: dict = field(default_factory=lambda: {})
     stats: dict = field(default_factory=lambda: {})
     incompatible_licenses: list = field(default_factory=lambda: [])
-    time: datetime = datetime.now()
+    time: datetime = field(default_factory=lambda: datetime.now())
 
     @property
     def licenses(self) -> List[str]:
