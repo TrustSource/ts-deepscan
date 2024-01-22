@@ -4,8 +4,10 @@
 
 from typing import List, Union, Optional
 
+
 class SpdxParseError(Exception):
     pass
+
 
 class SpdxOp:
     def __init__(self, op, *args):
@@ -20,6 +22,7 @@ class SpdxOp:
 
         return lics
 
+
 class SpdxLic:
     def __init__(self, key):
         self.key = key
@@ -27,7 +30,6 @@ class SpdxLic:
     @property
     def licenses(self):
         return [self.key]
-
 
 
 def parse_spdx_expr(expr):
@@ -52,7 +54,7 @@ def parse_spdx_expr(expr):
             stack = []
         else:
             args = stack[start:]
-            stack = stack[0:start-1]
+            stack = stack[0:start - 1]
 
         if ops[-1]:
             ops[-1].args = args
@@ -89,7 +91,6 @@ def parse_spdx_expr(expr):
         elif token != '':
             stack.append(SpdxLic(token))
 
-
     while pos < len(expr):
         if expr[pos] == '(':
             ops.append(None)
@@ -116,4 +117,13 @@ def parse_spdx_expr(expr):
         return None
 
 
-#print(parse_spdx_expr('GPL-2.0-or-later').licenses)
+def get_licenses_from_spdx(spdx: str) -> List[str]:
+    try:
+        if res := parse_spdx_expr(spdx):
+            return res.licenses
+    except SpdxParseError:
+        pass
+
+    return []
+
+# print(parse_spdx_expr('GPL-2.0-or-later').licenses)

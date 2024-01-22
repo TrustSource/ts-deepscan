@@ -2,9 +2,10 @@ six
 spacy==3.6.0
 nltk
 text-unidecode
-requests
+requests==2.31.0
 progress
 click>=8.0.3
 osadl_matrix
 ts-python-client
 pyminr>=0.1.1
+scancode-toolkit==32.0.8

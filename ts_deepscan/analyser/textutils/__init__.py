@@ -9,7 +9,6 @@ import string
 import spacy
 
 import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 from typing import Optional, Iterable
 from pathlib import Path
@@ -17,11 +16,14 @@ from pathlib import Path
 from spacy.vocab import Vocab
 from spacy.tokens import Doc, Token
 
-from ..spdx import parse_spdx_expr
-from ...scancode.cluecode.copyrights import detect_copyrights
+from ..spdx import get_licenses_from_spdx
+from ..scancode import detect_copyrights
 from ...analyser.Dataset import Dataset
 
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 __nlp = None
+
 
 def create_doc(text: str = '') -> Optional[Doc]:
     global __nlp
@@ -29,8 +31,8 @@ def create_doc(text: str = '') -> Optional[Doc]:
     if not __nlp:
         __nlp = spacy.blank('en')
 
-        #__nlp = spacy.load('en')
-        #__nlp = spacy.load('en_core_web_sm')
+        # __nlp = spacy.load('en')
+        # __nlp = spacy.load('en_core_web_sm')
 
     if text:
         try:
@@ -43,23 +45,30 @@ def create_doc(text: str = '') -> Optional[Doc]:
 
 
 def word_tokens_from_doc(doc: Doc) -> t.Iterable[Token]:
-    return (t for t in doc if not (t.is_space or t.is_punct))
+    return (tok for tok in doc if not (tok.is_space or tok.is_punct))
+
 
 def similarity_tokens_from_doc(doc: Doc) -> t.Iterable[Token]:
-    #return (t for t in word_tokens_from_doc(doc) if not t.is_stop)
+    # return (t for t in word_tokens_from_doc(doc) if not t.is_stop)
     return word_tokens_from_doc(doc)
 
 
 def compute_hash(doc: Doc) -> str:
     from functools import reduce
-    orths = (t.orth for t in word_tokens_from_doc(doc))
+    orths = (tok.orth for tok in word_tokens_from_doc(doc))
     words = reduce(lambda res, i: res + i.to_bytes(8, byteorder='big'), orths, bytes())
     return hashlib.md5(words).hexdigest()
 
-def compute_file_hash(path: Path) -> str:
-    with path.open() as fp:
-        content = fp.read()
-        return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+def compute_file_hash(path: Path) -> t.Tuple[str, str]:
+    h = hashlib.sha1()
+    with path.open('rb') as fp:
+        chunk = 0
+        while chunk != b'':
+            chunk = fp.read(1024)
+            h.update(chunk)
+
+    return h.hexdigest(), 'sha1'
 
 
 # def extract_copyright(text):
@@ -107,21 +116,19 @@ def extract_copyright(text) -> dict:
     authors = []
     copyrights = []
 
-    def push_detection_to_results(t, v):
-        if t == 'years':
+    def push_detection_to_results(res_type, v):
+        if res_type == 'years':
             copyrights[-1]['date'] = v
         else:
-            res = copyrights[-1].get(t, [])
+            res = copyrights[-1].get(res_type, [])
             res.append(v)
-            copyrights[-1][t] = res
-
+            copyrights[-1][res_type] = res
 
     for spdx_copyright_text in find_spdx_copyright_text(text):
         copyrights.append({'clause': 'SPDX-FileCopyrightText: {}'.format(spdx_copyright_text)})
 
         for (ty, val, _, _) in detect_copyrights('Copyright {}'.format(spdx_copyright_text), copyrights=False):
             push_detection_to_results(ty, val)
-
 
     for (ty, val, _, _) in detect_copyrights(text):
         if ty == 'copyrights':
@@ -142,14 +149,14 @@ def extract_copyright(text) -> dict:
     return result
 
 
-
 def find_spdx_copyright_text(text: str) -> Iterable[str]:
     expr_begin = 0
     expr = 'spdx-filecopyrighttext:'
 
     while True:
         expr_begin = text.lower().find(expr, expr_begin)
-        if expr_begin == -1: return
+        if expr_begin == -1:
+            return
 
         expr_begin += len(expr)
         expr_end = text.find(u'\n', expr_begin)
@@ -179,6 +186,7 @@ def find_spdx_license_id(text: str) -> Optional[str]:
 
 __similarity_threshold = 0.8
 
+
 def find_match(text: str, dataset: Dataset):
     if not (doc := create_doc(text)):
         return None, None
@@ -193,7 +201,7 @@ def find_match(text: str, dataset: Dataset):
     lic = None
     score = 0.0
 
-    w1 = {t.orth for t in similarity_tokens_from_doc(doc)}
+    w1 = {tok.orth for tok in similarity_tokens_from_doc(doc)}
 
     # Compute similarity scores
     for key, val in dataset.data.items():
@@ -217,6 +225,7 @@ __ignored_aliases = [
     'Sendmail', 'Sleepycat', 'TCL', 'Vim', 'W3C', 'X11', 'Xerox', 'Xnet', 'Zed', 'Zlib'
 ]
 
+
 def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
     for k, v in dataset.data.items():
         name = v['name']
@@ -224,7 +233,7 @@ def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
 
         if k not in aliases and k not in __ignored_aliases:
             aliases.append(k)
-        
+
         if name not in aliases:
             aliases.append(name)
 
@@ -248,37 +257,35 @@ def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
 
 
 def analyse_text(text: str, dataset: Dataset, search_copyright: bool = True) -> Optional[dict]:
-    copyrights = extract_copyright(text) if search_copyright else {}
-    spdx = find_spdx_license_id(text)
+    from ..scancode import detect_licenses as scancode_detect_licenses
 
-    licenses = []
+    result = {}
+
+    if spdx := find_spdx_license_id(text):
+        result['spdx'] = spdx
+        result['licenses'] = get_licenses_from_spdx(spdx)
+
+    lics, clues, spdx = scancode_detect_licenses(text)
 
     if spdx:
-        try:
-            expr = parse_spdx_expr(spdx)
-        except Exception:
-            expr = None
+        result['licenses'] = get_licenses_from_spdx(spdx)
+    elif licenses := [lic['license_expression'] for lic in lics]:
+        result['licenses'] = licenses
 
-        if expr:
-            licenses = expr.licenses
+    if clues:
+        result['clues'] = clues
 
-    if not licenses:
-        licenses = [lic for lic in find_aliases(text, dataset)]
+    if 'licenses' not in result and (lics := list(find_aliases(text, dataset))):
+        result['licenses'] = lics
 
+    if search_copyright and (copyrights := extract_copyright(text)):
+        result.update(copyrights)
 
-    if licenses or copyrights or spdx:
-        result = {'text': text, 'licenses': licenses}
-
-        if spdx:
-            result['spdx'] = spdx
-
-        if copyrights:
-            result.update(copyrights)
-
+    if result:
+        result['text'] = text
         return result
-
-    return None
-
+    else:
+        return None
 
 
 def analyse_license_text(text: str, dataset: Dataset, search_copyright: bool = True) -> Optional[dict]:

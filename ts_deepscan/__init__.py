@@ -6,7 +6,7 @@ import sys
 import json
 import requests
 import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
+
 import gzip
 
 from .config import get_datasetdir
@@ -22,6 +22,9 @@ from .analyser.CommentAnalyser import CommentAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
 
 
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+
 def __load_spacy_models():
     import spacy
 
@@ -34,8 +37,13 @@ def __load_spacy_models():
         exit(2)
 
 
-def create_default_analysers(dataset: Dataset, include_copyright: bool = False, include_crypto: bool = False) -> List[FileAnalyser]:
-    analysers = [LicenseAnalyser(dataset, include_copyright), CommentAnalyser(dataset, include_copyright)]
+def create_default_analysers(dataset: Dataset,
+                             include_copyright: bool = False,
+                             include_crypto: bool = False) -> List[FileAnalyser]:
+
+    analysers = [LicenseAnalyser(dataset, include_copyright),
+                 CommentAnalyser(dataset, include_copyright)]
+
     if include_crypto:
         try:
             from .analyser.CryptoAnalyser import CryptoAnalyser
@@ -73,10 +81,11 @@ def create_dataset():
     return dataset
 
 
-def execute_scan(paths: [Path], _scanner: Scanner, title = '') -> Scan:
+def execute_scan(paths: [Path], _scanner: Scanner, title='') -> Scan:
     from progress.bar import Bar
 
     no_result = []
+
     def onSuccess(p, r):
         if not r:
             no_result.append(p)
@@ -84,11 +93,12 @@ def execute_scan(paths: [Path], _scanner: Scanner, title = '') -> Scan:
     _scanner.onFileScanSuccess = onSuccess
 
     progress_bar: Optional[Bar] = None
-    def onProgress(finishedTasks: int, totalTasks: int):
+
+    def onProgress(finished: int, total: int):
         nonlocal progress_bar
-        if finishedTasks == 0:
+        if finished == 0:
             bar_title = f"Scanning {title}" if title else "Scanning"
-            progress_bar = Bar(bar_title, max=totalTasks)
+            progress_bar = Bar(bar_title, max=total)
         elif progress_bar:
             progress_bar.next()
 
@@ -105,14 +115,13 @@ def execute_scan(paths: [Path], _scanner: Scanner, title = '') -> Scan:
     }
 
     _scan = Scan(result=result,
-                 no_result =no_result,
-                 stats = stats, # prepare_stats(result, no_result, stats)
+                 no_result=no_result,
+                 stats=stats,  # prepare_stats(result, no_result, stats)
                  options=_scanner.options)
 
     _scan.compute_licenses_compatibility()
 
     return _scan
-
 
 
 def prepare_stats(result, no_result, stats):
@@ -142,12 +151,12 @@ def prepare_stats(result, no_result, stats):
     return stats
 
 
-
 deepscanBaseUrl = 'https://api.prod.trustsource.io/deepscan'
 
-__DIRECT_UPLOAD_SIZE_LIMIT = 500 * 1024 # 500KB: Upload limit without an intermediate storage
+__DIRECT_UPLOAD_SIZE_LIMIT = 500 * 1024  # 500KB: Upload limit without an intermediate storage
 
-def upload_data(data: dict, module_name: str, api_key: str, base_url = deepscanBaseUrl) -> Optional[Tuple[str, str]]:
+
+def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBaseUrl) -> Optional[Tuple[str, str]]:
     params = {
         'module': module_name
     }
@@ -187,7 +196,7 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url = deepscanB
     return None
 
 
-def _upload_with_request(data: bytes, headers: dict, params: dict, base_url = deepscanBaseUrl) -> requests.Response:
+def _upload_with_request(data: bytes, headers: dict, params: dict, base_url=deepscanBaseUrl) -> requests.Response:
     resp = requests.get(f'{base_url}/request-upload', headers=headers)
 
     if resp.status_code not in range(200, 300):

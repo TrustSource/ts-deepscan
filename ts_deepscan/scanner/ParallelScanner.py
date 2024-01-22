@@ -13,7 +13,8 @@ from pathlib import Path
 from .Scanner import Scanner
 from ..analyser import FileAnalyser
 
-def get_context() -> mp.context.BaseContext:
+
+def get_context() -> mp.context.DefaultContext:
     """
     Return multiprocessing context based on the OS        
     """
@@ -22,7 +23,9 @@ def get_context() -> mp.context.BaseContext:
     else:
         return mp.get_context('spawn')
 
+
 _ctx = get_context()
+
 
 class ParallelScanner(Scanner):
     Queue = _ctx.Queue
@@ -36,25 +39,22 @@ class ParallelScanner(Scanner):
         super().__init_subclass__(**kwargs)
         cls.__enable_logging = enable_logging
 
-
     def __init__(self, num_jobs: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._num_jobs = num_jobs if num_jobs > 0 else mp.cpu_count() - 1
 
-
     def _log(self, msg, lvl=logging.INFO):
         if self.__class__.__enable_logging:
             logging.log(lvl, msg)
 
-
     def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
         results = {}
-        
-        tasksQueue = _ctx.Queue()
-        resultsQueue = _ctx.Queue()
 
-        workers = self._create_workers(tasksQueue, resultsQueue, min(self._num_jobs, len(files)))
+        tasks = _ctx.Queue()
+        task_results = _ctx.Queue()
+
+        workers = self._create_workers(tasks, task_results, min(self._num_jobs, len(files)))
 
         self._log(f'Num of workers: {self._num_jobs}')
 
@@ -62,15 +62,15 @@ class ParallelScanner(Scanner):
             w.start()
 
         for f in files:
-            tasksQueue.put(f)
+            tasks.put(f)
 
         for _ in range(self._num_jobs):
-            tasksQueue.put((None, None))
+            tasks.put((None, None))
 
         tasks_done = 0
         while not self._cancelled and tasks_done < len(files):
             try:
-                relpath, result, error = resultsQueue.get(timeout=ParallelScanner.results_wait_time)
+                relpath, result, error = task_results.get(timeout=ParallelScanner.results_wait_time)
             except queue.Empty:
                 self._log(f'No results received within {ParallelScanner.results_wait_time} seconds. Checking status...')
 
@@ -89,7 +89,7 @@ class ParallelScanner(Scanner):
 
                     self._log('Restarting failed workers')
 
-                    w_restarted = self._create_workers(tasksQueue, resultsQueue, len(w_failed))
+                    w_restarted = self._create_workers(tasks, task_results, len(w_failed))
                     for w in w_restarted:
                         w.start()
 
@@ -122,20 +122,17 @@ class ParallelScanner(Scanner):
 
         return results
 
-
-    def _create_workers(self, qTasks: _ctx.Queue, qResults: _ctx.Queue, num: int = 1) -> 'Worker':
-        return [ParallelScanner.Worker(qTasks, qResults, self.analysers) for _ in range(num)]
-
+    def _create_workers(self, tasks: _ctx.Queue, results: _ctx.Queue, num: int = 1) -> 'Worker':
+        return [ParallelScanner.Worker(tasks, results, self.analysers) for _ in range(num)]
 
     class Worker(_ctx.Process):
-        def __init__(self, tasksQueue: _ctx.Queue, resultsQueue: _ctx.Queue, analysers: t.List[FileAnalyser]):
+        def __init__(self, tasks: _ctx.Queue, results: _ctx.Queue, analysers: t.List[FileAnalyser]):
             super().__init__()
 
-            self._tasksQueue = tasksQueue
-            self._resultsQueue = resultsQueue
+            self._tasksQueue = tasks
+            self._resultsQueue = results
 
             self._analysers = analysers
-
 
         def _accepts(self, path: Path) -> bool:
             return any(a.accepts(path) for a in self._analysers)
@@ -152,12 +149,8 @@ class ParallelScanner(Scanner):
                 relpath = str(path.relative_to(root) if root else path)
 
                 try:
-                    result = relpath, self._scan_file(path) , None
+                    result = relpath, self._scan_file(path), None
                 except Exception as err:
                     result = relpath, {}, err
 
                 self._resultsQueue.put(result)
-
-
-
-

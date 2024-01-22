@@ -7,6 +7,7 @@ import typing as t
 
 from pathlib import Path
 
+
 class Dataset(object):
     def __init__(self, path: Path):
         self.__path = path
@@ -52,14 +53,12 @@ class Dataset(object):
             with open(datasetpath, 'r') as fp:
                 self.__data = json.load(fp)
 
-
     def _build(self):
         data = self._build_data()
         with open(self.__datasetpath, 'w') as fp:
             json.dump(data, fp)
 
         return data
-
 
     def _build_data(self):
         data = {}
@@ -74,16 +73,15 @@ class Dataset(object):
         return data
 
 
-
 def _build_entry(text):
     from .textutils import create_doc, compute_hash, similarity_tokens_from_doc
-#       docpath = self.__path / '{}.bin'.format(key)
+    #       docpath = self.__path / '{}.bin'.format(key)
 
     doc = create_doc(text)
-#        doc.to_disk(docpath)
+    #        doc.to_disk(docpath)
 
     return {
-        #'path': str(docpath),
+        # 'path': str(docpath),
         'hash': compute_hash(doc),
-        'orths': [t.orth for t in similarity_tokens_from_doc(doc)]
+        'orths': [tok.orth for tok in similarity_tokens_from_doc(doc)]
     }

@@ -6,19 +6,20 @@ import re
 
 from .textutils import *
 
-from . import FileAnalyser
+from . import TextFileAnalyser
 from ..analyser import Dataset
+from ..commentparser.language import Lang, classify
 
 
-class LicenseAnalyser(FileAnalyser):
+class LicenseAnalyser(TextFileAnalyser):
     category_name = 'license'
 
-    def __init__(self, dataset: Dataset, include_copyright = False):
+    def __init__(self, dataset: Dataset, include_copyright=False):
         self.dataset = dataset
         self.include_copyright = include_copyright
 
     def _match(self, path):
-        return re.search('LICENSE|COPYING|COPYRIGHT', path.name, re.IGNORECASE)
+        return classify(path) == Lang.Unknown and super()._match(path)
 
     @property
     def options(self) -> dict:
@@ -29,10 +30,12 @@ class LicenseAnalyser(FileAnalyser):
         }
 
     def analyse(self, path):
-        with path.open(errors="surrogateescape") as fp:
+        with path.open('r', encoding='utf-8', errors="surrogateescape") as fp:
+            result = None
             content = fp.read()
 
-            result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
+            if re.search('LICENSE|COPYING|COPYRIGHT', path.name, re.IGNORECASE):
+                result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
 
             if result is None:
                 result = analyse_text(content, self.dataset, search_copyright=self.include_copyright)

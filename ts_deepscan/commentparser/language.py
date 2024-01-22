@@ -4,6 +4,7 @@
 
 from enum import Enum, unique
 
+
 @unique
 class Lang(Enum):
     Unknown = 0
@@ -18,7 +19,7 @@ class Lang(Enum):
     Dart = 9
     Elixir = 10
     Fortran = 11
-    GLSLF = 12 # OpenGL Shading Language
+    GLSLF = 12  # OpenGL Shading Language
     Go = 13
     Haskell = 14
     HTML = 15
@@ -172,23 +173,22 @@ class Lang(Enum):
         return self == Lang.Swift
 
 
-
 @unique
 class Style(Enum):
     unknown = 0
-    applescript = 1     # -- ... and (*... *)
-    batch = 2           # @ REM
-    bcpl = 3            # // ... and / *... * /
-    cmake = 4           #  # ... and #[[ ... ]]
-    fortran = 5         # ! ...
-    haskell = 6         # -- ... and {- ... -}
-    html = 7            # <!-- ... -->
-    lisp = 8            # ;; ...
-    matlab = 9          # % ...
-    mysql = 10          #  # ... and /* ... */
-    ruby = 11           #  # ... and =begin ... =end
-    shell = 12          #  # ... and %{ ... %}
-    sql = 13            # -- ... and / *... * /
+    applescript = 1  # -- ... and (*... *)
+    batch = 2  # @ REM
+    bcpl = 3  # // ... and / *... * /
+    cmake = 4  # # ... and #[[ ... ]]
+    fortran = 5  # ! ...
+    haskell = 6  # -- ... and {- ... -}
+    html = 7  # <!-- ... -->
+    lisp = 8  # ;; ...
+    matlab = 9  # % ...
+    mysql = 10  # # ... and /* ... */
+    ruby = 11  # # ... and =begin ... =end
+    shell = 12  # # ... and %{ ... %}
+    sql = 13  # -- ... and / *... * /
 
 
 def classify(path):
@@ -204,11 +204,11 @@ def classify(path):
         return Lang.Batch
     elif ext in ["c", "cc", "cpp", "c++", "h", "hh", "hpp"]:
         return Lang.C
-    elif ext ==  "clif":
+    elif ext == "clif":
         return Lang.Clif
-    elif ext ==  "cmake":
+    elif ext == "cmake":
         return Lang.CMake
-    elif ext ==  "cs":
+    elif ext == "cs":
         return Lang.CSharp
     elif ext == "dart":
         return Lang.Dart
@@ -246,17 +246,17 @@ def classify(path):
         return Lang.Python
     elif ext == "r":
         return Lang.R
-    elif ext ==  "rb":
+    elif ext == "rb":
         return Lang.Ruby
     elif ext == "rs":
         return Lang.Rust
-    elif ext ==  "s":
+    elif ext == "s":
         return Lang.Assembly
     elif ext == "sh":
         return Lang.Shell
     elif ext == "shader":
         return Lang.Shader
-    elif ext ==  "sql":
+    elif ext == "sql":
         return Lang.SQL
     elif ext == "swift":
         return Lang.Swift

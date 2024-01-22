@@ -5,7 +5,7 @@
 from typing import Optional, Iterable
 from pathlib import Path
 
-from . import FileAnalyser
+from . import TextFileAnalyser
 from .Dataset import Dataset
 from .textutils import analyse_text, analyse_license_text
 
@@ -13,15 +13,15 @@ from ..commentparser import Comment, extract_comments
 from ..commentparser.language import Lang, classify
 
 
-class CommentAnalyser(FileAnalyser):
+class CommentAnalyser(TextFileAnalyser):
     category_name = 'comments'
 
-    def __init__(self, dataset: Dataset, include_copyright = False):
+    def __init__(self, dataset: Dataset, include_copyright=False):
         self.dataset = dataset
         self.include_copyright = include_copyright
 
     def _match(self, path: Path) -> bool:
-        return classify(path) != Lang.Unknown
+        return classify(path) != Lang.Unknown and super()._match(path)
 
     @property
     def options(self) -> dict:
@@ -58,7 +58,6 @@ class CommentAnalyser(FileAnalyser):
 
         return None
 
-
     def __analyse_comments(self, comments) -> Iterable[dict]:
         if len(comments) > 0:
             head, *tail = comments
@@ -77,4 +76,3 @@ class CommentAnalyser(FileAnalyser):
                 res['endLine'] = c.endLine
 
                 yield res
-

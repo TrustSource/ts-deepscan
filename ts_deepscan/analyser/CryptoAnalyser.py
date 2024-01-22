@@ -5,6 +5,7 @@ from pathlib import Path
 from ..analyser import FileAnalyser
 from ..commentparser.language import Lang, classify
 
+
 class CryptoAnalyser(FileAnalyser):
     category_name = 'crypto'
 

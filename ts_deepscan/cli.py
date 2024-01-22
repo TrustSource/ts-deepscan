@@ -14,15 +14,15 @@ from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
 from ts_python_client.cli import get_start_cmd, scan
 
+start = get_start_cmd(version='2.1.0')
 
-start = get_start_cmd(version='2.0.6')
 
 def main():
     start()
 
 
 @click.option('-j', '--jobs',
-              default=-1 if sys.platform != 'win32' else 1, # Turn off multitasking due to the long spawn on Windows
+              default=-1 if sys.platform != 'win32' else 1,  # Turn off multitasking due to the long spawn on Windows
               help='Number of parallel jobs')
 @click.option('--include-copyright',
               default=False,
@@ -33,17 +33,14 @@ def main():
               is_flag=True,
               help='Enables searching for used cryptographic algorithms in source code files')
 @click.option('--ignore-pattern',
-              type = str,
+              type=str,
               multiple=True,
               required=False,
               help='Unix filename pattern for files that has to be ignored during a scan')
-
 @scan.impl
 def scan(paths: List[pathlib.Path], *args, **kwargs) -> Scan:
     scanner = create_scanner(*args, **kwargs)
     return execute_scan(paths, scanner)
-
-
 
 
 @start.command
@@ -59,7 +56,7 @@ def scan(paths: List[pathlib.Path], *args, **kwargs) -> Scan:
               default=deepscanBaseUrl,
               help='DeepScan API base URL')
 @click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
-def upload(module_name: str, api_key: str, base_url: str, path: pathlib.Path,):
+def upload(module_name: str, api_key: str, base_url: str, path: pathlib.Path, ):
     with path.open('r') as fp:
         data = json.load(fp)
 

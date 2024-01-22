@@ -8,11 +8,9 @@ setup(
         'ts_deepscan.analyser',
         'ts_deepscan.analyser.textutils',
         'ts_deepscan.commentparser',
-        'ts_deepscan.scanner',
-        'ts_deepscan.scancode',
-        'ts_deepscan.scancode.cluecode'
+        'ts_deepscan.scanner'
     ],
-    version='2.0.7',
+    version='2.1.0',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -25,11 +23,12 @@ setup(
         'spacy==3.6.0',
         'nltk',
         'text-unidecode',
-        'requests',
+        'requests==2.31.0',
         'progress',
         'osadl_matrix',
         'ts-python-client>=2.0.4',
-        'pyminr>=0.1.1'
+        'pyminr>=0.1.1',
+        'scancode-toolkit==32.0.8'
     ],
     scripts=['ts-deepscan'],
     entry_points={

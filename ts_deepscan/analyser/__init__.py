@@ -6,6 +6,7 @@ from typing import Any, Optional
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+
 class FileAnalyser(ABC):
     def __call__(self, path: Path):
         return self.analyse(path) if self.accepts(path) else None
