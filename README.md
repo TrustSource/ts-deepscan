@@ -136,7 +136,8 @@ If you want to exclude files from analysis while scanning directories, you can s
 ```
 ts-deepscan scan --ignore-pattern "*.pyc" -o result.json ./ts-deepscan
 ```
-scans the directory 'ts-deepscan' and exludes all Python compiled files with an extension "pyc" from the analysis.  
+scans the directory 'ts-deepscan' and exludes all Python compiled files with an extension "pyc" from the analysis.
+To add several ignore patterns in parallel, add several '--ignore-pattern' key and value pairs. Please note, that it will not be necessary to exclude binaries or multi-media files. DeepScan will identify and skip these automatically.
 
 ## Number of parallel jobs
 The default is to use the maximal number of availbale CPU cores (cpu_count - 1) on Unix based systems and one core on Windows (due to slow process forking), if you want to specify the number of parallel jobs manually, you can use *-j* option, e.g.
