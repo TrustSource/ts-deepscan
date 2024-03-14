@@ -150,7 +150,8 @@ class ParallelScanner(Scanner):
 
                 try:
                     result = relpath, self._scan_file(path), None
-                except Exception as err:
-                    result = relpath, {}, err
+                except:
+                    logging.exception(f'An error occured while scanning: {relpath}')
+                    result = relpath, {}, 'An error occured while scanning file'
 
                 self._resultsQueue.put(result)

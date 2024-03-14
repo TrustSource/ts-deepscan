@@ -6,11 +6,12 @@ setup(
     packages=[
         'ts_deepscan',
         'ts_deepscan.analyser',
+        'ts_deepscan.analyser.scancode',
         'ts_deepscan.analyser.textutils',
         'ts_deepscan.commentparser',
         'ts_deepscan.scanner'
     ],
-    version='2.1.0',
+    version='2.1.2',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -20,7 +21,7 @@ setup(
     classifiers=[],
     install_requires=[
         'six',
-        'spacy==3.6.0',
+        'spacy==3.7.4',
         'nltk',
         'text-unidecode',
         'requests==2.31.0',
@@ -37,5 +38,5 @@ setup(
     setup_requires=[
         'wheel'
     ],
-    include_package_data = True,
+    include_package_data=True,
 )
