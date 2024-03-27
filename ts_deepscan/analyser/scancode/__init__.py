@@ -1,21 +1,31 @@
 import sys
 import typing as t
+import functools
+
+from time import time
 
 
-def detect_copyrights(text: str, copyrights=True, holders=True, authors=True,
-                      include_years=True, include_allrights=False, deadline=sys.maxsize):
+def detect_copyrights(text: str,
+                      copyrights=True, holders=True, authors=True,
+                      include_years=True, include_allrights=False,
+                      timeout=-1):
     from cluecode.copyrights import Detection, detect_copyrights_from_lines
+    from scancode.interrupt import interruptible
 
     numbered_lines = list(enumerate(text.splitlines()))
 
-    detections = detect_copyrights_from_lines(
-        numbered_lines=numbered_lines,
-        include_copyrights=copyrights,
-        include_holders=holders,
-        include_authors=authors,
-        include_copyright_years=include_years,
-        include_copyright_allrights=include_allrights,
-        deadline=deadline)
+    detect = functools.partial(detect_copyrights_from_lines,
+                               numbered_lines=numbered_lines,
+                               include_copyrights=copyrights,
+                               include_holders=holders,
+                               include_authors=authors,
+                               include_copyright_years=include_years,
+                               include_copyright_allrights=include_allrights)
+    if timeout > 0:
+        detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
+        _, detections = interruptible(detect, timeout=timeout)
+    else:
+        detections = detect()
 
     copyrights, holders, authors = Detection.split(detections)
 
@@ -29,15 +39,23 @@ def detect_copyrights(text: str, copyrights=True, holders=True, authors=True,
         yield 'authors', v.author, v.start_line, v.end_line
 
 
-def detect_licenses(text: str, include_text: bool = False) -> t.Tuple[list, list, t.Optional[str]]:
+def detect_licenses(text: str,
+                    include_text: bool = False,
+                    timeout=-1) -> t.Tuple[list, list, t.Optional[str]]:
     from licensedcode.detection import detect_licenses
     from licensedcode.cache import build_spdx_license_expression, get_cache
     from packagedcode.utils import combine_expressions
+    from scancode.interrupt import interruptible
 
-    detections = detect_licenses(
-        query_string=text,
-        include_text=include_text
-    )
+    detect = functools.partial(detect_licenses,
+                               query_string=text,
+                               include_text=include_text)
+
+    if timeout > 0:
+        detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
+        _, detections = interruptible(detect, timeout=timeout)
+    else:
+        detections = detect()
 
     lic_detections = []
     lic_expressions = []

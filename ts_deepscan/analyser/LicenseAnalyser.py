@@ -14,7 +14,9 @@ from ..commentparser.language import Lang, classify
 class LicenseAnalyser(TextFileAnalyser):
     category_name = 'license'
 
-    def __init__(self, dataset: Dataset, include_copyright=False):
+    def __init__(self, dataset: Dataset, include_copyright=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.dataset = dataset
         self.include_copyright = include_copyright
 
@@ -38,6 +40,8 @@ class LicenseAnalyser(TextFileAnalyser):
                 result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
 
             if result is None:
-                result = analyse_text(content, self.dataset, search_copyright=self.include_copyright)
+                result = analyse_text(content, self.dataset,
+                                      timeout=self.timeout,
+                                      search_copyright=self.include_copyright)
 
             return result

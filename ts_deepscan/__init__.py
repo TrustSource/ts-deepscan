@@ -38,16 +38,17 @@ def __load_spacy_models():
 
 
 def create_default_analysers(dataset: Dataset,
+                             timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
                              include_copyright: bool = False,
                              include_crypto: bool = False) -> List[FileAnalyser]:
 
-    analysers = [LicenseAnalyser(dataset, include_copyright),
-                 CommentAnalyser(dataset, include_copyright)]
+    analysers = [LicenseAnalyser(dataset, include_copyright, timeout=timeout),
+                 CommentAnalyser(dataset, include_copyright, timeout=timeout)]
 
     if include_crypto:
         try:
             from .analyser.CryptoAnalyser import CryptoAnalyser
-            analysers.append(CryptoAnalyser())
+            analysers.append(CryptoAnalyser(timeout=timeout))
         except Exception as err:
             print('Crypto analyser error: ', err)
             pass
@@ -56,16 +57,20 @@ def create_default_analysers(dataset: Dataset,
 
 
 def create_scanner(jobs: int = -1,
+                   timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
                    include_copyright: bool = False,
                    include_crypto: bool = False,
                    ignore_pattern: tuple = tuple()) -> Scanner:
 
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' and include_crypto:
+        if jobs > 1:
+            print('Warning: parallel analysis is unavailable on Windows when \'include-crypto\' flag is enabled')
+
         # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
         jobs = 1
 
     dataset = create_dataset()
-    analysers = create_default_analysers(dataset, include_copyright, include_crypto)
+    analysers = create_default_analysers(dataset, timeout, include_copyright, include_crypto)
 
     return ParallelScanner(num_jobs=jobs,
                            analysers=analysers,
@@ -153,7 +158,7 @@ def prepare_stats(result, no_result, stats):
 
 deepscanBaseUrl = 'https://api.prod.trustsource.io/deepscan'
 
-__DIRECT_UPLOAD_SIZE_LIMIT = 500 * 1024  # 500KB: Upload limit without an intermediate storage
+__DIRECT_UPLOAD_SIZE_LIMIT = 100 * 1024  # 100KB: Upload limit without an intermediate storage
 
 
 def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBaseUrl) -> Optional[Tuple[str, str]]:
@@ -173,6 +178,10 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBas
     if len(data) <= __DIRECT_UPLOAD_SIZE_LIMIT:
         headers['Content-Encoding'] = 'gzip'
         resp = requests.post(f'{base_url}/upload-results', data=compressed, headers=headers, params=params)
+
+        if resp.status_code == 504:
+            # Timeout, try to upload using intermediate S3 storage
+            resp = _upload_with_request(compressed, headers=headers, params=params, base_url=base_url)
     else:
         resp = _upload_with_request(compressed, headers=headers, params=params, base_url=base_url)
 

@@ -107,6 +107,10 @@ To scan a complete directory:
 ```
 ts-deepscan scan ./ts-deepscan
 ```
+To set a timeout for each file (not the whole scan) in seconds (Default: 60 seconds. Unlimited: -1):
+```
+ts-deepscan scan --timeout 120 ./ts-deepscan
+```
 You may use a piped command in combination with ```xargs``` to select only files matching a particular pattern:
 ```
 find packages -type f -print | grep "linkedin" | xargs ts-deepscan scan -o somefile.json

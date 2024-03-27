@@ -256,7 +256,7 @@ def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
             yield k
 
 
-def analyse_text(text: str, dataset: Dataset, search_copyright: bool = True) -> Optional[dict]:
+def analyse_text(text: str, dataset: Dataset, timeout: int = -1, search_copyright: bool = True) -> Optional[dict]:
     from ..scancode import detect_licenses as scancode_detect_licenses
 
     result = {}
@@ -265,7 +265,7 @@ def analyse_text(text: str, dataset: Dataset, search_copyright: bool = True) -> 
         result['spdx'] = spdx
         result['licenses'] = get_licenses_from_spdx(spdx)
 
-    lics, clues, spdx = scancode_detect_licenses(text)
+    lics, clues, spdx = scancode_detect_licenses(text, timeout=timeout)
 
     if spdx:
         result['licenses'] = get_licenses_from_spdx(spdx)
