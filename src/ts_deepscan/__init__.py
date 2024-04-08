@@ -6,6 +6,7 @@ import sys
 import json
 import requests
 import warnings
+import typing as t
 import gzip
 
 from tqdm import tqdm
@@ -24,7 +25,7 @@ from .analyser.Dataset import Dataset
 from .analyser.CommentAnalyser import CommentAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
 from .analyser.ScanossAnalyser import ScanossAnalyser
-
+from .analyser.YaraAnalyser import YaraAnalyser
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -69,6 +70,8 @@ def create_scanner(jobs: int = -1,
                    include_crypto: bool = True,
                    include_scanoss_wfp: bool = False,
                    ignore_pattern: tuple = tuple(),
+                   enable_yara: bool = False,
+                   yara_rules: t.Optional[Path] = None,                   
                    default_gitignores: Optional[List[Path]] = None,
                    dataset: Optional[Dataset] = None) -> Scanner:
 
@@ -82,10 +85,17 @@ def create_scanner(jobs: int = -1,
     if not dataset:
         dataset = create_dataset()
 
+
     analysers = create_default_analysers(dataset, timeout,
                                          include_copyright=include_copyright,
                                          include_crypto=include_crypto,
                                          include_scanoss=include_scanoss_wfp)
+
+    if enable_yara:
+        if yara_rules:
+            analysers.append(YaraAnalyser(rules_path=yara_rules))
+        else:
+            print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
 
     return PoolScanner(num_jobs=jobs,
                        task_timeout=timeout,
