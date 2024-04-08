@@ -11,7 +11,7 @@ setup(
         'ts_deepscan.commentparser',
         'ts_deepscan.scanner'
     ],
-    version='2.2.0',
+    version='2.3.0',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',

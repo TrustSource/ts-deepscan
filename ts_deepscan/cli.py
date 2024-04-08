@@ -43,6 +43,15 @@ def main():
               multiple=True,
               required=False,
               help='Unix filename pattern for files that has to be ignored during a scan')
+@click.option('--enable-yara',
+              default=False, show_default=True,
+              is_flag=True,
+              help='Enables YARA analyser')
+@click.option('--yara-rules',
+              type=click.Path(exists=True, path_type=pathlib.Path),
+              #multiple=True,
+              required=False,
+              help='Directory path containing YARA rules')
 @scan.impl
 def scan(paths: List[pathlib.Path], *args, **kwargs) -> Scan:
     scanner = create_scanner(*args, **kwargs)

@@ -149,6 +149,12 @@ The default is to use the maximal number of availbale CPU cores (cpu_count - 1) 
 ```
 ts-deepscan scan -j 4 -o result.json ./ts-deepscan
 ```
+## Enable YARA analyser
+To enable the YARA analyser you can use the *--enable-yara* option together with the *--yara-rules* option specifying the YARA rules location. The location can be either a file or a directory with files, the scanner loads all files with *.yar* extension:    
+
+```
+ts-deepscan scan --enable-yara --yara-rules <YOUR RULES SET> -o result.json ./ts-deepscan
+```
 
 ## Uploading scan results
 For uploading previously stored scan results (scan executed with the '-o' option) to the TrustSource app use the following command: 

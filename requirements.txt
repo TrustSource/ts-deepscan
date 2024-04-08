@@ -9,3 +9,4 @@ osadl_matrix
 ts-python-client
 pyminr>=0.1.1
 scancode-toolkit==32.0.8
+yara-python==4.5.0

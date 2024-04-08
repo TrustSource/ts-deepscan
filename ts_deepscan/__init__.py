@@ -6,6 +6,7 @@ import sys
 import json
 import requests
 import warnings
+import typing as t
 
 import gzip
 
@@ -20,7 +21,7 @@ from .analyser.Dataset import Dataset
 
 from .analyser.CommentAnalyser import CommentAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
-
+from .analyser.YaraAnalyser import YaraAnalyser
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -60,7 +61,9 @@ def create_scanner(jobs: int = -1,
                    timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
                    include_copyright: bool = False,
                    include_crypto: bool = False,
-                   ignore_pattern: tuple = tuple()) -> Scanner:
+                   ignore_pattern: tuple = tuple(),
+                   enable_yara: bool = False,
+                   yara_rules: t.Optional[Path] = None) -> Scanner:
 
     if sys.platform == 'win32' and include_crypto:
         if jobs > 1:
@@ -71,6 +74,12 @@ def create_scanner(jobs: int = -1,
 
     dataset = create_dataset()
     analysers = create_default_analysers(dataset, timeout, include_copyright, include_crypto)
+
+    if enable_yara:
+        if yara_rules:
+            analysers.append(YaraAnalyser(rules_path=yara_rules))
+        else:
+            print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
 
     return ParallelScanner(num_jobs=jobs,
                            analysers=analysers,
