@@ -24,7 +24,7 @@ setup(
         'spacy==3.7.4',
         'nltk',
         'text-unidecode',
-        'requests==2.31.0',
+        'requests==2.32.0',
         'progress',
         'osadl_matrix',
         'ts-python-client>=2.0.4',
