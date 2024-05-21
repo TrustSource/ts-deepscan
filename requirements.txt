@@ -2,7 +2,7 @@ six
 spacy==3.6.0
 nltk
 text-unidecode
-requests==2.31.0
+requests==2.32.0
 progress
 click>=8.0.3
 osadl_matrix
