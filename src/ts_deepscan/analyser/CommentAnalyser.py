@@ -75,7 +75,8 @@ class CommentAnalyser(TextFileAnalyser):
         for c in comments:
             res = analyse_text(c.text, self.dataset,
                                timeout=self.timeout,
-                               search_copyright=self.include_copyright)
+                               search_copyright=self.include_copyright,
+                               include_original_text=self.include_original_text)
             if res:
                 res['line'] = c.startLine
                 res['endLine'] = c.endLine

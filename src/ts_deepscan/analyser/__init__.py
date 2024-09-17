@@ -11,8 +11,12 @@ from abc import ABC, abstractmethod
 class FileAnalyser(ABC):
     DEFAULT_TIMEOUT = 60
 
-    def __init__(self, timeout=DEFAULT_TIMEOUT):
+    # Max file size in bytes
+    MAX_FILE_SIZE = 10 ** 6
+
+    def __init__(self, timeout=DEFAULT_TIMEOUT, max_file_size=MAX_FILE_SIZE):
         self.timeout = timeout
+        self.max_file_size = max_file_size
 
     def __call__(self, path: Path, root: t.Optional[Path] = None):
         return self.analyse(path, root) if self.accepts(path) else None
@@ -37,7 +41,17 @@ class FileAnalyser(ABC):
 
 
 class TextFileAnalyser(FileAnalyser, ABC):
+    def __init__(self, include_original_text=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.include_original_text = include_original_text
+
     def _match(self, path: Path) -> bool:
+        if not path.exists():
+            return False
+
+        if path.stat().st_size > self.max_file_size:
+            return False
+
         try:
             with path.open('r', encoding='utf-8') as _:
                 return True

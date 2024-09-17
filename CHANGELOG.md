@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.3.0] - 2024-04-08
 ### New Features
     * Add YARA analyser
+    * Add a flag for the file size limit, to skip opening and scanning of large files  
 
 ## [2.2.0] - 2024-03-27
 ### New Features

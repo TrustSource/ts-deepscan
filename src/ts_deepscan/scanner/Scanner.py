@@ -150,7 +150,6 @@ class Scanner(object):
                             p = p.resolve()
                             p = p.relative_to(_root.resolve()) if _root else p
                             self.onPathIgnored(str(p))
-
                         continue
                     else:
                         yield from walk(p, _root, gitignores)

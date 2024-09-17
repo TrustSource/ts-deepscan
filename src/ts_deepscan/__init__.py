@@ -43,17 +43,29 @@ def __load_spacy_models():
 
 
 def create_default_analysers(dataset: Dataset,
+                             include_original_text: bool = True,
                              timeout: int,
+                             max_file_size: int = FileAnalyser.MAX_FILE_SIZE,
                              include_copyright: bool,
                              include_crypto: bool,
                              include_scanoss: bool) -> List[FileAnalyser]:
-    analysers = [LicenseAnalyser(dataset, include_copyright, timeout=timeout),
-                 CommentAnalyser(dataset, include_copyright, timeout=timeout)]
+
+    analysers = [LicenseAnalyser(dataset, include_copyright,
+                                 include_original_text=include_original_text,
+                                 timeout=timeout,
+                                 max_file_size=max_file_size),
+                 CommentAnalyser(dataset, include_copyright,
+                                 include_original_text=include_original_text,
+                                 timeout=timeout,
+                                 max_file_size=max_file_size)]
 
     if include_crypto:
         try:
             from .analyser.CryptoAnalyser import CryptoAnalyser
-            analysers.append(CryptoAnalyser(timeout=timeout))
+            analysers.append(CryptoAnalyser(
+                include_original_text=include_original_text,
+                timeout=timeout,
+                max_file_size=max_file_size))
         except Exception as err:
             print('Crypto analyser error: ', err)
             pass
@@ -65,7 +77,9 @@ def create_default_analysers(dataset: Dataset,
 
 
 def create_scanner(jobs: int = -1,
+                   include_original_text: bool = True,
                    timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
+                   max_file_size: int = FileAnalyser.MAX_FILE_SIZE,
                    include_copyright: bool = True,
                    include_crypto: bool = True,
                    include_scanoss_wfp: bool = False,
@@ -82,18 +96,25 @@ def create_scanner(jobs: int = -1,
         # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
         jobs = 1
 
+
     if not dataset:
         dataset = create_dataset()
 
 
-    analysers = create_default_analysers(dataset, timeout,
+    analysers = create_default_analysers(dataset, 
+                                         include_original_text=include_original_text,
+                                         timeout=timeout,
+                                         max_file_size=max_file_size,
                                          include_copyright=include_copyright,
                                          include_crypto=include_crypto,
                                          include_scanoss=include_scanoss_wfp)
 
     if enable_yara:
         if yara_rules:
-            analysers.append(YaraAnalyser(rules_path=yara_rules))
+            analysers.append(YaraAnalyser(
+                timeout=timeout,
+                max_file_size=max_file_size,
+                rules_path=yara_rules))
         else:
             print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
 

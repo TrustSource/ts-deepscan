@@ -16,7 +16,7 @@ from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
 from ts_python_client.cli import get_start_cmd, scan
 
-start = get_start_cmd(version='2.2.0')
+start = get_start_cmd(version='2.3.0')
 
 
 def main():
@@ -30,6 +30,14 @@ def main():
               default=FileAnalyser.DEFAULT_TIMEOUT, show_default=True,
               required=False,
               help='Timeout in seconds for each file')
+@click.option('--max-file-size',
+              default=FileAnalyser.MAX_FILE_SIZE, show_default=True,
+              required=False,
+              help='Max file size in bytes to be scanned')
+@click.option('--include-original-text/--no-include-original-text',
+              default=True, show_default=True,
+              is_flag=True,
+              help='Includes original findings text into results')
 @click.option('--include-copyright',
               default=False, show_default=True,
               is_flag=True,

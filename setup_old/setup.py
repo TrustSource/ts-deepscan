@@ -25,6 +25,7 @@ setup(
         "gitignore-parser~=0.1.11",
         "tqdm~=4.66.3",
         "scanoss~=1.19.4",
+        'yara-python~=4.5.0'
     ],
     scripts=['ts-deepscan'],
     entry_points={

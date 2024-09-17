@@ -10,6 +10,8 @@ from . import TextFileAnalyser
 from ..analyser import Dataset
 from ..commentparser.language import Lang, classify
 
+MAX_LICENSE_TEXT_LENGTH = 100000
+
 
 class LicenseAnalyser(TextFileAnalyser):
     category_name = 'license'
@@ -36,8 +38,9 @@ class LicenseAnalyser(TextFileAnalyser):
             result = None
             content = fp.read()
 
-            if re.search('LICENSE|COPYING|COPYRIGHT', path.name, re.IGNORECASE):
-                result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
+            if len(content) < MAX_LICENSE_TEXT_LENGTH:
+                if re.search('LICENSE|COPYING|COPYRIGHT', path.name, re.IGNORECASE):
+                    result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
 
             if result is None:
                 result = analyse_text(content, self.dataset,

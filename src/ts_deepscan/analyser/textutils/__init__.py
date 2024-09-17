@@ -256,7 +256,11 @@ def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
             yield k
 
 
-def analyse_text(text: str, dataset: Dataset, timeout: int = -1, search_copyright: bool = True) -> Optional[dict]:
+def analyse_text(text: str, dataset: Dataset,
+                 timeout: int = -1,
+                 search_copyright: bool = True,
+                 include_original_text: bool = True) -> Optional[dict]:
+
     from ..scancode import detect_licenses as scancode_detect_licenses
 
     result = {}
@@ -282,7 +286,9 @@ def analyse_text(text: str, dataset: Dataset, timeout: int = -1, search_copyrigh
         result.update(copyrights)
 
     if result:
-        # result['text'] = text
+        if include_original_text:
+            result['text'] = text
+                   
         return result
     else:
         return None
