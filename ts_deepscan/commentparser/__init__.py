@@ -60,11 +60,11 @@ class Lexer(object):
                 if self.__lang == Lang.Python:
                     if c == '\'' and self.match("'''"):
                         quote = "'''"
-                        if self.__pos.lineChar[len(self.__pos.lineChar)-1] == 3:
+                        if self.__pos.lineChar[len(self.__pos.lineChar) - 1] == 3:
                             isDocString = True
                     elif c == '"' and self.match('"""'):
                         quote = '"""'
-                        if self.__pos.lineChar[len(self.__pos.lineChar)-1] == 3:
+                        if self.__pos.lineChar[len(self.__pos.lineChar) - 1] == 3:
                             isDocString = True
                     else:
                         self.readChar()
@@ -146,13 +146,12 @@ class Lexer(object):
                         content += c
 
                     self.comments.append(Comment(
-                        startLine = startLine,
+                        startLine=startLine,
                         endLine=self.__pos.line,
                         text=content
                     ))
 
             self.readChar()
-
 
     def singleLineComment(self):
         if self.match(self.__lang.singleLineCommentStart):
@@ -163,9 +162,7 @@ class Lexer(object):
         elif self.__lang == Lang.ObjectiveC:
             return self.match(Lang.Matlab.singleLineCommentStart)
 
-
         return False
-
 
     def multiLineComment(self):
         s = self.__lang.multiLineCommentStart
@@ -182,7 +179,6 @@ class Lexer(object):
                 return True, s, Lang.Matlab.multiLineCommentEnd
 
         return False, "", ""
-
 
     def match(self, s):
         if s == "":
@@ -210,13 +206,11 @@ class Lexer(object):
     def eof(self):
         return len(self.__content) <= self.__offset
 
-
     def peekChar(self):
         if self.eof:
             return None, False
 
         return self.__content[self.__offset], True
-
 
     def readChar(self):
         r = self.__content[self.__offset]
@@ -229,7 +223,6 @@ class Lexer(object):
 
         self.__offset += 1
         return r
-
 
     def unreadChar(self, c):
         self.__offset -= 1

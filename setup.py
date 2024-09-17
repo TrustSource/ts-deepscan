@@ -29,7 +29,8 @@ setup(
         'osadl_matrix',
         'ts-python-client>=2.0.4',
         'pyminr>=0.1.1',
-        'scancode-toolkit==32.0.8'
+        'scancode-toolkit==32.0.8',
+        'yara-python==4.5.0'
     ],
     scripts=['ts-deepscan'],
     entry_points={

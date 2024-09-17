@@ -128,11 +128,11 @@ class Scanner(object):
             elif path.is_dir():
                 for p in path.iterdir():
                     if not match(p.name):
+                        print(f'Ignored: {str(p)}')
                         if self.onPathIgnored:
                             p = p.resolve()
                             p = p.relative_to(root.resolve()) if root else p
                             self.onPathIgnored(str(p))
-
                         continue
                     else:
                         yield from walk(p, root)
