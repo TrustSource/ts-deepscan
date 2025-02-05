@@ -107,6 +107,10 @@ To scan a complete directory:
 ```
 ts-deepscan scan ./ts-deepscan
 ```
+To set a timeout for each file (not the whole scan) in seconds (Default: 60 seconds. Unlimited: -1):
+```
+ts-deepscan scan --timeout 120 ./ts-deepscan
+```
 You may use a piped command in combination with ```xargs``` to select only files matching a particular pattern:
 ```
 find packages -type f -print | grep "linkedin" | xargs ts-deepscan scan -o somefile.json
@@ -136,7 +140,8 @@ If you want to exclude files from analysis while scanning directories, you can s
 ```
 ts-deepscan scan --ignore-pattern "*.pyc" -o result.json ./ts-deepscan
 ```
-scans the directory 'ts-deepscan' and exludes all Python compiled files with an extension "pyc" from the analysis.  
+scans the directory 'ts-deepscan' and exludes all Python compiled files with an extension "pyc" from the analysis.
+To add several ignore patterns in parallel, add several '--ignore-pattern' key and value pairs. Please note, that it will not be necessary to exclude binaries or multi-media files. DeepScan will identify and skip these automatically.
 
 ## Number of parallel jobs
 The default is to use the maximal number of availbale CPU cores (cpu_count - 1) on Unix based systems and one core on Windows (due to slow process forking), if you want to specify the number of parallel jobs manually, you can use *-j* option, e.g.

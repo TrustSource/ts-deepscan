@@ -10,11 +10,13 @@ import pathlib
 from typing import List
 
 from .scanner import Scan
+from .analyser import FileAnalyser
+
 from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
 
 from ts_python_client.cli import get_start_cmd, scan
 
-start = get_start_cmd(version='2.1.0')
+start = get_start_cmd(version='2.2.0')
 
 
 def main():
@@ -24,12 +26,16 @@ def main():
 @click.option('-j', '--jobs',
               default=-1 if sys.platform != 'win32' else 1,  # Turn off multitasking due to the long spawn on Windows
               help='Number of parallel jobs')
+@click.option('--timeout',
+              default=FileAnalyser.DEFAULT_TIMEOUT, show_default=True,
+              required=False,
+              help='Timeout in seconds for each file')
 @click.option('--include-copyright',
-              default=False,
+              default=False, show_default=True,
               is_flag=True,
               help='Enables searching for copyright information in source code files')
 @click.option('--include-crypto',
-              default=False,
+              default=False, show_default=True,
               is_flag=True,
               help='Enables searching for used cryptographic algorithms in source code files')
 @click.option('--ignore-pattern',

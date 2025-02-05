@@ -8,6 +8,11 @@ from pathlib import Path
 
 
 class FileAnalyser(ABC):
+    DEFAULT_TIMEOUT = 60
+
+    def __init__(self, timeout=DEFAULT_TIMEOUT):
+        self.timeout = timeout
+
     def __call__(self, path: Path):
         return self.analyse(path) if self.accepts(path) else None
 

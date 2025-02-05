@@ -16,7 +16,9 @@ from ..commentparser.language import Lang, classify
 class CommentAnalyser(TextFileAnalyser):
     category_name = 'comments'
 
-    def __init__(self, dataset: Dataset, include_copyright=False):
+    def __init__(self, dataset: Dataset, include_copyright=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.dataset = dataset
         self.include_copyright = include_copyright
 
@@ -61,7 +63,8 @@ class CommentAnalyser(TextFileAnalyser):
     def __analyse_comments(self, comments) -> Iterable[dict]:
         if len(comments) > 0:
             head, *tail = comments
-            res = analyse_license_text(head.text, self.dataset, search_copyright=self.include_copyright)
+            res = analyse_license_text(head.text, self.dataset,
+                                       search_copyright=self.include_copyright)
             if res:
                 res['line'] = head.startLine
                 res['endLine'] = head.endLine
@@ -70,7 +73,9 @@ class CommentAnalyser(TextFileAnalyser):
                 yield res
 
         for c in comments:
-            res = analyse_text(c.text, self.dataset, search_copyright=self.include_copyright)
+            res = analyse_text(c.text, self.dataset,
+                               timeout=self.timeout,
+                               search_copyright=self.include_copyright)
             if res:
                 res['line'] = c.startLine
                 res['endLine'] = c.endLine

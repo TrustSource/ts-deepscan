@@ -2,15 +2,18 @@ import pyminr
 
 from pathlib import Path
 
-from ..analyser import FileAnalyser
+from ..analyser import TextFileAnalyser
 from ..commentparser.language import Lang, classify
 
 
-class CryptoAnalyser(FileAnalyser):
+class CryptoAnalyser(TextFileAnalyser):
     category_name = 'crypto'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def _match(self, path: Path):
-        return classify(path) != Lang.Unknown
+        return classify(path) != Lang.Unknown and super()._match(path)
 
     @property
     def options(self) -> dict:
