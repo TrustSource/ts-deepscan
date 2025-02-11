@@ -33,7 +33,7 @@ class CommentAnalyser(TextFileAnalyser):
             'includeCopyright': self.include_copyright
         }
 
-    def analyse(self, path: Path) -> Optional[list]:
+    def analyse(self, path: Path, root: Optional[Path] = None) -> Optional[list]:
         with path.open(errors="surrogateescape") as fp:
             content = fp.read()
             comments = extract_comments(content, classify(path))

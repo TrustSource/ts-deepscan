@@ -31,7 +31,7 @@ class LicenseAnalyser(TextFileAnalyser):
             'includeCopyright': self.include_copyright
         }
 
-    def analyse(self, path):
+    def analyse(self, path: Path, root: t.Optional[Path] = None):
         with path.open('r', encoding='utf-8', errors="surrogateescape") as fp:
             result = None
             content = fp.read()

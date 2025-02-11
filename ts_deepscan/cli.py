@@ -6,23 +6,24 @@ import json
 import sys
 import click
 import pathlib
+import typing as t
 
-from typing import List
-
-from .scanner import Scan
 from .analyser import FileAnalyser
 
-from . import create_scanner, execute_scan, upload_data, deepscanBaseUrl
-
-from ts_python_client.cli import get_start_cmd, scan
-
-start = get_start_cmd(version='2.2.0')
+from . import create_scanner, execute_scan, upload_data, baseUrl
 
 
 def main():
-    start()
+    cli()
 
 
+@click.group()
+@click.version_option(package_name='ts-deepscan')
+def cli():
+    pass
+
+
+@cli.command('scan')
 @click.option('-j', '--jobs',
               default=-1 if sys.platform != 'win32' else 1,  # Turn off multitasking due to the long spawn on Windows
               help='Number of parallel jobs')
@@ -43,26 +44,39 @@ def main():
               multiple=True,
               required=False,
               help='Unix filename pattern for files that has to be ignored during a scan')
-@scan.impl
-def scan(paths: List[pathlib.Path], *args, **kwargs) -> Scan:
+@click.option('-o', '--output', 'output_path',
+              type=click.Path(path_type=pathlib.Path),
+              required=False,
+              help='Output path for the scan')
+@click.argument('paths', type=click.Path(exists=True, path_type=pathlib.Path), nargs=-1)
+def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
     scanner = create_scanner(*args, **kwargs)
-    return execute_scan(paths, scanner)
+    s = execute_scan(list(paths), scanner)
+
+    # noinspection PyUnresolvedReferences
+    s_json = s.to_json()
+
+    if output_path:
+        with output_path.resolve().open('w') as fp:
+            fp.write(s_json)
+    else:
+        print(s_json)
 
 
-@start.command
-@click.option('--module-name',
-              type=str,
-              required=True,
-              help='Module name of the scan')
+@cli.command('upload')
+@click.option('--base-url',
+              default=baseUrl,
+              help='DeepScan API base URL')
 @click.option('--api-key',
               type=str,
               required=True,
               help='TrustSource API Key')
-@click.option('--base-url',
-              default=deepscanBaseUrl,
-              help='DeepScan API base URL')
+@click.option('--module-name',
+              type=str,
+              required=True,
+              help='Module name of the scan')
 @click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
-def upload(module_name: str, api_key: str, base_url: str, path: pathlib.Path, ):
+def upload(path: pathlib.Path, module_name: str, api_key: str, base_url: str):
     with path.open('r') as fp:
         data = json.load(fp)
 

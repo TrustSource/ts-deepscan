@@ -6,20 +6,24 @@ import sys
 import json
 import requests
 import warnings
-
 import gzip
+
+from tqdm import tqdm
+# noinspection PyProtectedMember
+from dataclasses_json.core import _ExtendedEncoder
 
 from .config import get_datasetdir
 
 from .scanner import Scan
 from .scanner.Scanner import *
-from .scanner.ParallelScanner import ParallelScanner
+from .scanner.PoolScanner import PoolScanner
 
 from .analyser import FileAnalyser
 from .analyser.Dataset import Dataset
 
 from .analyser.CommentAnalyser import CommentAnalyser
 from .analyser.LicenseAnalyser import LicenseAnalyser
+from .analyser.ScanossAnalyser import ScanossAnalyser
 
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -40,8 +44,8 @@ def __load_spacy_models():
 def create_default_analysers(dataset: Dataset,
                              timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
                              include_copyright: bool = False,
-                             include_crypto: bool = False) -> List[FileAnalyser]:
-
+                             include_crypto: bool = False,
+                             include_scanoss: bool = True) -> List[FileAnalyser]:
     analysers = [LicenseAnalyser(dataset, include_copyright, timeout=timeout),
                  CommentAnalyser(dataset, include_copyright, timeout=timeout)]
 
@@ -53,6 +57,9 @@ def create_default_analysers(dataset: Dataset,
             print('Crypto analyser error: ', err)
             pass
 
+    if include_scanoss:
+        analysers.append(ScanossAnalyser(timeout=timeout))
+
     return analysers
 
 
@@ -60,7 +67,9 @@ def create_scanner(jobs: int = -1,
                    timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
                    include_copyright: bool = False,
                    include_crypto: bool = False,
-                   ignore_pattern: tuple = tuple()) -> Scanner:
+                   ignore_pattern: tuple = tuple(),
+                   default_gitignores: Optional[List[Path]] = None,
+                   dataset: Optional[Dataset] = None) -> Scanner:
 
     if sys.platform == 'win32' and include_crypto:
         if jobs > 1:
@@ -69,15 +78,21 @@ def create_scanner(jobs: int = -1,
         # Do crypto analysis without multitasking due to spawn + native libs issues on Windows
         jobs = 1
 
-    dataset = create_dataset()
-    analysers = create_default_analysers(dataset, timeout, include_copyright, include_crypto)
+    if not dataset:
+        dataset = create_dataset()
 
-    return ParallelScanner(num_jobs=jobs,
-                           analysers=analysers,
-                           ignore_patterns=list(ignore_pattern))
+    analysers = create_default_analysers(dataset, timeout,
+                                         include_copyright=include_copyright,
+                                         include_crypto=include_crypto)
+
+    return PoolScanner(num_jobs=jobs,
+                       task_timeout=timeout,
+                       analysers=analysers,
+                       ignore_patterns=list(ignore_pattern),
+                       default_gitignores=default_gitignores)
 
 
-def create_dataset():
+def create_dataset() -> Dataset:
     path = get_datasetdir()
 
     dataset = Dataset(path)
@@ -87,32 +102,34 @@ def create_dataset():
 
 
 def execute_scan(paths: [Path], _scanner: Scanner, title='') -> Scan:
-    from progress.bar import Bar
-
     no_result = []
+    progress_bar: Optional[tqdm] = None
 
-    def onSuccess(p, r):
+    def onScanCompleted(p, r, errs):
         if not r:
             no_result.append(p)
 
-    _scanner.onFileScanSuccess = onSuccess
-
-    progress_bar: Optional[Bar] = None
-
     def onProgress(finished: int, total: int):
         nonlocal progress_bar
-        if finished == 0:
-            bar_title = f"Scanning {title}" if title else "Scanning"
-            progress_bar = Bar(bar_title, max=total)
-        elif progress_bar:
-            progress_bar.next()
+        with tqdm.get_lock():
+            if progress_bar is None:
+                progress_bar = tqdm(
+                    desc=f"Scanning {title}" if title else "Scanning",
+                    total=total,
+                    miniters=1,
+                    leave=False,
+                    bar_format='{desc:<40}{percentage:3.0f}%|{bar:10}{r_bar}')
+            else:
+                progress_bar.update(finished - progress_bar.n)
 
     _scanner.onProgress = onProgress
+    _scanner.onFileScanCompleted = onScanCompleted
 
     result = _scanner.run(paths)
 
-    if progress_bar:
-        progress_bar.finish()
+    if progress_bar is not None:
+        with tqdm.get_lock():
+            progress_bar.close()
 
     stats = {
         'total': _scanner.totalTasks,
@@ -156,12 +173,12 @@ def prepare_stats(result, no_result, stats):
     return stats
 
 
-deepscanBaseUrl = 'https://api.prod.trustsource.io/deepscan'
+baseUrl = 'https://api.prod.trustsource.io/deepscan'
 
 __DIRECT_UPLOAD_SIZE_LIMIT = 100 * 1024  # 100KB: Upload limit without an intermediate storage
 
 
-def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBaseUrl) -> Optional[Tuple[str, str]]:
+def upload_data(data: dict, module_name: str, api_key: str, base_url=baseUrl) -> Optional[Tuple[str, str]]:
     params = {
         'module': module_name
     }
@@ -172,7 +189,7 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBas
         'x-api-key': api_key
     }
 
-    data = bytes(json.dumps(data), 'utf-8')
+    data = bytes(json.dumps(data, cls=_ExtendedEncoder), 'utf-8')
     compressed = gzip.compress(data)
 
     if len(data) <= __DIRECT_UPLOAD_SIZE_LIMIT:
@@ -205,7 +222,7 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url=deepscanBas
     return None
 
 
-def _upload_with_request(data: bytes, headers: dict, params: dict, base_url=deepscanBaseUrl) -> requests.Response:
+def _upload_with_request(data: bytes, headers: dict, params: dict, base_url=baseUrl) -> requests.Response:
     resp = requests.get(f'{base_url}/request-upload', headers=headers)
 
     if resp.status_code not in range(200, 300):

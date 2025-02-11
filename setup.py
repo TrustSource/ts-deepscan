@@ -11,7 +11,7 @@ setup(
         'ts_deepscan.commentparser',
         'ts_deepscan.scanner'
     ],
-    version='2.2.0',
+    version='2.3.0',
     description='Repository scanner for the identification of effective licenses and copyright information.',
     author='EACG GmbH',
     license='Apache 2.0',
@@ -22,14 +22,16 @@ setup(
     install_requires=[
         'six',
         'spacy==3.7.4',
-        'nltk',
+        "nltk==3.9",
         'text-unidecode',
-        'requests==2.31.0',
-        'progress',
+        'requests==2.32.3',
         'osadl_matrix',
-        'ts-python-client>=2.0.4',
         'pyminr>=0.1.1',
-        'scancode-toolkit==32.0.8'
+        'scancode-toolkit==32.3.0',
+        'dataclasses-json',
+        'gitignore-parser==0.1.11',
+        "tqdm==4.66.3",
+        "scanoss==1.19.4"
     ],
     scripts=['ts-deepscan'],
     entry_points={

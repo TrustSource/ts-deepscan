@@ -1,4 +1,5 @@
 import pyminr
+import typing as t
 
 from pathlib import Path
 
@@ -21,7 +22,7 @@ class CryptoAnalyser(TextFileAnalyser):
             'includeCrypto': True
         }
 
-    def analyse(self, path: Path):
+    def analyse(self, path: Path, root: t.Optional[Path] = None):
         result = []
 
         def _report_result(algorithm, coding):

@@ -34,7 +34,7 @@ def create_doc(text: str = '') -> Optional[Doc]:
         # __nlp = spacy.load('en')
         # __nlp = spacy.load('en_core_web_sm')
 
-    if text:
+    if text and len(text) <= __nlp.max_length:
         try:
             doc = __nlp(text)
             return doc
@@ -282,7 +282,7 @@ def analyse_text(text: str, dataset: Dataset, timeout: int = -1, search_copyrigh
         result.update(copyrights)
 
     if result:
-        result['text'] = text
+        # result['text'] = text
         return result
     else:
         return None

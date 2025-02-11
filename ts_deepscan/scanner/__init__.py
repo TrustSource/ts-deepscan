@@ -2,16 +2,21 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import dataclasses_json
+
 from typing import List
 from datetime import datetime
 from pathlib import Path
+
 from dataclasses import dataclass, field, asdict
+from dataclasses_json import dataclass_json
 
-from ts_python_client.commands.ScanCommand import Scan as TSScan
+dataclasses_json.cfg.global_config.encoders[datetime] = datetime.isoformat
+dataclasses_json.cfg.global_config.decoders[datetime] = datetime.fromisoformat
 
-
+@dataclass_json
 @dataclass
-class Scan(TSScan):
+class Scan:
     result: dict = field(default_factory=lambda: {})
     no_result: list = field(default_factory=lambda: [])
     options: dict = field(default_factory=lambda: {})
@@ -58,18 +63,3 @@ class Scan(TSScan):
                     self.incompatible_licenses.append([l1, l2])
                 elif osadl_matrix.is_compatible(l2, l1) == osadl_matrix.OSADLCompatibility.NO:
                     self.incompatible_licenses.append([l2, l1])
-
-    @staticmethod
-    def from_dict(data: dict) -> 'Scan':
-        return Scan(
-            result = data.get('result', {}),
-            no_result = data.get('no_result', []),
-            options=data.get('options', {}),
-            stats = data.get('stats', {}),
-            incompatible_licenses=data.get('incompatible_licenses', [])
-        )
-
-    def to_dict(self) -> dict:
-        d = asdict(self)
-        d['time'] = str(d['time'])
-        return d

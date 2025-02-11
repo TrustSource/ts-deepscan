@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Optional
-from abc import ABC, abstractmethod
+import typing as t
+
 from pathlib import Path
+from abc import ABC, abstractmethod
 
 
 class FileAnalyser(ABC):
@@ -13,15 +14,15 @@ class FileAnalyser(ABC):
     def __init__(self, timeout=DEFAULT_TIMEOUT):
         self.timeout = timeout
 
-    def __call__(self, path: Path):
-        return self.analyse(path) if self.accepts(path) else None
+    def __call__(self, path: Path, root: t.Optional[Path] = None):
+        return self.analyse(path, root) if self.accepts(path) else None
 
     @abstractmethod
     def _match(self, path: Path) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    def analyse(self, path: Path) -> Optional[Any]:
+    def analyse(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[t.Any]:
         raise NotImplementedError()
 
     @property

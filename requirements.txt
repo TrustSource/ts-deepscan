@@ -2,10 +2,12 @@ six
 spacy==3.6.0
 nltk
 text-unidecode
-requests==2.31.0
-progress
+requests~=2.32.3
 click>=8.0.3
 osadl_matrix
-ts-python-client
 pyminr>=0.1.1
-scancode-toolkit==32.0.8
+scancode-toolkit==32.3.0
+dataclasses-json
+gitignore-parser==0.1.11
+tqdm==4.66.3
+scanoss==1.19.4

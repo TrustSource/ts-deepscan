@@ -70,7 +70,8 @@ class ParallelScanner(Scanner):
         tasks_done = 0
         while not self._cancelled and tasks_done < len(files):
             try:
-                relpath, result, error = task_results.get(timeout=ParallelScanner.results_wait_time)
+                relpath, result, errors = task_results.get(timeout=ParallelScanner.results_wait_time)
+
             except queue.Empty:
                 self._log(f'No results received within {ParallelScanner.results_wait_time} seconds. Checking status...')
 
@@ -103,10 +104,7 @@ class ParallelScanner(Scanner):
                     self._log(f'All workers exited')
                     break
 
-            if error:
-                self._notifyError(relpath, error)
-            else:
-                self._notifySuccess(relpath, result)
+            self._notifyCompletion(relpath, result, errors)
 
             if result:
                 results.update({
@@ -134,24 +132,12 @@ class ParallelScanner(Scanner):
 
             self._analysers = analysers
 
-        def _accepts(self, path: Path) -> bool:
-            return any(a.accepts(path) for a in self._analysers)
-
-        def _scan_file(self, path: Path) -> dict:
-            return Scanner._scan_file(path, self._analysers)
-
         def run(self) -> None:
             while True:
                 path, root = self._tasksQueue.get()
+
                 if not path:
                     break
 
-                relpath = str(path.relative_to(root) if root else path)
-
-                try:
-                    result = relpath, self._scan_file(path), None
-                except:
-                    logging.exception(f'An error occured while scanning: {relpath}')
-                    result = relpath, {}, 'An error occured while scanning file'
-
+                result = Scanner._scan_file(path, self._analysers, root)
                 self._resultsQueue.put(result)
