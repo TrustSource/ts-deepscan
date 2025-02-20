@@ -42,10 +42,10 @@ def __load_spacy_models():
 
 
 def create_default_analysers(dataset: Dataset,
-                             timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
-                             include_copyright: bool = False,
-                             include_crypto: bool = False,
-                             include_scanoss: bool = True) -> List[FileAnalyser]:
+                             timeout: int,
+                             include_copyright: bool,
+                             include_crypto: bool,
+                             include_scanoss: bool) -> List[FileAnalyser]:
     analysers = [LicenseAnalyser(dataset, include_copyright, timeout=timeout),
                  CommentAnalyser(dataset, include_copyright, timeout=timeout)]
 
@@ -65,8 +65,9 @@ def create_default_analysers(dataset: Dataset,
 
 def create_scanner(jobs: int = -1,
                    timeout: int = FileAnalyser.DEFAULT_TIMEOUT,
-                   include_copyright: bool = False,
-                   include_crypto: bool = False,
+                   include_copyright: bool = True,
+                   include_crypto: bool = True,
+                   include_scanoss_wfp: bool = False,
                    ignore_pattern: tuple = tuple(),
                    default_gitignores: Optional[List[Path]] = None,
                    dataset: Optional[Dataset] = None) -> Scanner:
@@ -83,7 +84,8 @@ def create_scanner(jobs: int = -1,
 
     analysers = create_default_analysers(dataset, timeout,
                                          include_copyright=include_copyright,
-                                         include_crypto=include_crypto)
+                                         include_crypto=include_crypto,
+                                         include_scanoss=include_scanoss_wfp)
 
     return PoolScanner(num_jobs=jobs,
                        task_timeout=timeout,

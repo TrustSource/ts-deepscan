@@ -7,6 +7,7 @@ import sys
 import click
 import pathlib
 import typing as t
+import shutil
 
 from .analyser import FileAnalyser
 
@@ -14,7 +15,8 @@ from . import create_scanner, execute_scan, upload_data, baseUrl
 
 
 def main():
-    cli()
+    width = shutil.get_terminal_size(fallback=(120, 24)).columns
+    cli(max_content_width=width)
 
 
 @click.group()
@@ -24,29 +26,19 @@ def cli():
 
 
 @cli.command('scan')
-@click.option('-j', '--jobs',
-              default=-1 if sys.platform != 'win32' else 1,  # Turn off multitasking due to the long spawn on Windows
+@click.option('-j', '--jobs', default=-1 if sys.platform != 'win32' else 1,
               help='Number of parallel jobs')
-@click.option('--timeout',
-              default=FileAnalyser.DEFAULT_TIMEOUT, show_default=True,
-              required=False,
+@click.option('--timeout', default=FileAnalyser.DEFAULT_TIMEOUT, show_default=True, required=False,
               help='Timeout in seconds for each file')
-@click.option('--include-copyright',
-              default=False, show_default=True,
-              is_flag=True,
+@click.option('--include-copyright/--no-include-copyright', default=True, show_default=True,
               help='Enables searching for copyright information in source code files')
-@click.option('--include-crypto',
-              default=False, show_default=True,
-              is_flag=True,
+@click.option('--include-crypto/--no-include-crypto', default=True, show_default=True,
               help='Enables searching for used cryptographic algorithms in source code files')
-@click.option('--ignore-pattern',
-              type=str,
-              multiple=True,
-              required=False,
+@click.option('--include-scanoss-wfp/--no-include-scanoss-wfp', default=True, show_default=True,
+              help='Enables computation of file fingerprints using SCANOSS')
+@click.option('--ignore-pattern', type=str, multiple=True, required=False,
               help='Unix filename pattern for files that has to be ignored during a scan')
-@click.option('-o', '--output', 'output_path',
-              type=click.Path(path_type=pathlib.Path),
-              required=False,
+@click.option('-o', '--output', 'output_path', type=click.Path(path_type=pathlib.Path), required=False,
               help='Output path for the scan')
 @click.argument('paths', type=click.Path(exists=True, path_type=pathlib.Path), nargs=-1)
 def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
@@ -64,16 +56,11 @@ def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
 
 
 @cli.command('upload')
-@click.option('--base-url',
-              default=baseUrl,
+@click.option('--base-url', default=baseUrl,
               help='DeepScan API base URL')
-@click.option('--api-key',
-              type=str,
-              required=True,
+@click.option('--api-key', type=str, required=True,
               help='TrustSource API Key')
-@click.option('--module-name',
-              type=str,
-              required=True,
+@click.option('--module-name', type=str, required=True,
               help='Module name of the scan')
 @click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
 def upload(path: pathlib.Path, module_name: str, api_key: str, base_url: str):
