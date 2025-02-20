@@ -23,7 +23,7 @@ dependencies = [
     "click==8.1.7",
     "osadl_matrix==2024.5.22.10535",
     "pyminr~=0.1.1",
-    "scancode-toolkit~=32.3.2",
+    "scancode-toolkit-mini~=32.3.2",
     "dataclasses-json~=0.6.7",
     "gitignore-parser~=0.1.11",
     "tqdm~=4.66.3",
