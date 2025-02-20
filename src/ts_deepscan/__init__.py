@@ -119,8 +119,8 @@ def execute_scan(paths: [Path], _scanner: Scanner, title='') -> Scan:
                     desc=f"Scanning {title}" if title else "Scanning",
                     total=total,
                     miniters=1,
-                    leave=False,
-                    bar_format='{desc:<40}{percentage:3.0f}%|{bar:10}{r_bar}')
+                    leave=False)
+#                    bar_format='{desc:<40}{percentage:3.0f}%|{bar:10}{r_bar}')
             else:
                 progress_bar.update(finished - progress_bar.n)
 

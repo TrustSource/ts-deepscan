@@ -1,0 +1,40 @@
+[build-system]
+requires = ['setuptools>=61.0']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'ts-deepscan'
+version = '2.3.0'
+authors = [
+    { name='EACG GmbH' }
+]
+description = 'Repository scanner for the identification of effective licenses and copyright information.'
+readme = 'README.md'
+requires-python = '>=3.10'
+classifiers = []
+keywords = ['DeepScan', 'TrustSource']
+license = { text = 'Apache-2.0'}
+
+dependencies = [
+    "spacy~=3.6.0",
+    "nltk~=3.9",
+    "text-unidecode~=1.3",
+    "requests~=2.32.3",
+    "click==8.1.7",
+    "osadl_matrix==2024.5.22.10535",
+    "pyminr~=0.1.1",
+    "scancode-toolkit~=32.3.2",
+    "dataclasses-json~=0.6.7",
+    "gitignore-parser~=0.1.11",
+    "tqdm~=4.66.3",
+    "scanoss~=1.19.4",
+]
+
+[project.urls]
+Homepage = 'https://github.com/TrustSource/ts-deepscan.git'
+
+[project.scripts]
+ts-deepscan = "ts_deepscan.cli:main"
+
+[tool.setuptools.packages.find]
+where = ['src']
