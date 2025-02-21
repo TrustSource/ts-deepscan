@@ -19,6 +19,12 @@ class ScanossAnalyser(TextFileAnalyser):
     def _match(self, path: Path):
         return classify(path) != Lang.Unknown and super()._match(path)
 
+    @property
+    def options(self) -> dict:
+        return {
+            'includeWfp': True
+        }
+
     def analyse(self, path: Path, root: t.Optional[Path] = None):
         relpath = path.relative_to(root) if root else path
 
