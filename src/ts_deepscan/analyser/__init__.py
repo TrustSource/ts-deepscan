@@ -41,9 +41,8 @@ class FileAnalyser(ABC):
 
 
 class TextFileAnalyser(FileAnalyser, ABC):
-    def __init__(self, include_original_text=True, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.include_original_text = include_original_text
 
     def _match(self, path: Path) -> bool:
         if not path.exists():

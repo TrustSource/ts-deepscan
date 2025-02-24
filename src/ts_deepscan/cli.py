@@ -30,12 +30,18 @@ def cli():
               help='Number of parallel jobs')
 @click.option('--timeout', default=FileAnalyser.DEFAULT_TIMEOUT, show_default=True, required=False,
               help='Timeout in seconds for each file')
+@click.option('--max-file-size', default=FileAnalyser.MAX_FILE_SIZE, show_default=True, required=False,
+              help='Max file size in bytes to be scanned')
 @click.option('--include-copyright/--no-include-copyright', default=True, show_default=True,
               help='Enables searching for copyright information in source code files')
 @click.option('--include-crypto/--no-include-crypto', default=True, show_default=True,
               help='Enables searching for used cryptographic algorithms in source code files')
 @click.option('--include-scanoss-wfp/--no-include-scanoss-wfp', default=True, show_default=True,
               help='Enables computation of file fingerprints using SCANOSS')
+@click.option('--include-yara/--no-include-yara', default=False, show_default=True,
+              help='Enables YARA analyser')
+@click.option('--yara-rules', type=click.Path(exists=True, path_type=pathlib.Path), required=False,
+              help='Directory path containing YARA rules')
 @click.option('--ignore-pattern', type=str, multiple=True, required=False,
               help='Unix filename pattern for files that has to be ignored during a scan')
 @click.option('-o', '--output', 'output_path', type=click.Path(path_type=pathlib.Path), required=False,
