@@ -1,5 +1,5 @@
 
-# ![Supported Versions](https://img.shields.io/badge/Python-3.6,%203.7,%203.8,%203.9-blue) ![License](https://img.shields.io/badge/License-Apache--2.0-green) .![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TrustSource/ts-deepscan/badge)](https://scorecard.dev/viewer/?uri=github.com/TrustSource/ts-deepscan)
+# ![Supported Versions](https://img.shields.io/badge/Python-3.6,%203.7,%203.8,%203.9-blue) ![License](https://img.shields.io/badge/License-Apache--2.0-green) ![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TrustSource/ts-deepscan/badge)
 
 
 # TrustSource DeepScan 
