@@ -10,13 +10,13 @@ authors = [
 ]
 description = 'Repository scanner for the identification of effective licenses and copyright information.'
 readme = 'README.md'
-requires-python = '>=3.10'
+requires-python = '>=3.10,<3.13'
 classifiers = []
 keywords = ['DeepScan', 'TrustSource']
 license = { text = 'Apache-2.0'}
 
 dependencies = [
-    "spacy~=3.6.0",
+    "spacy~=3.8.4",
     "nltk~=3.9",
     "text-unidecode~=1.3",
     "requests~=2.32.3",
@@ -26,7 +26,7 @@ dependencies = [
     "scancode-toolkit-mini~=32.3.2",
     "dataclasses-json~=0.6.7",
     "gitignore-parser~=0.1.11",
-    "tqdm~=4.66.3",
+    "tqdm~=4.67.0",
     "scanoss~=1.19.4",
     "yara-python~=4.5.0"
 ]

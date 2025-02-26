@@ -8,10 +8,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] - 2024-04-08
+## [2.3.0] - 2025-02-25
 ### New Features
     * Add YARA analyser
-    * Add a flag for the file size limit, to skip opening and scanning of large files  
+    * Add SCANOSS analyser
+    * Add a flag for the file size limit, to skip opening and scanning of large files
+    * Add a multiprocessing.pool based scanner executing an analysis as a separate job
+    * Switch setup configuration to the pyproject.toml
+    * Update and pin package dependencies
 
 ## [2.2.0] - 2024-03-27
 ### New Features
