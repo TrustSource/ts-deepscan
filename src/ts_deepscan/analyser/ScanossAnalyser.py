@@ -1,9 +1,7 @@
 import typing as t
-import tempfile
 
 from pathlib import Path
 from scanoss.winnowing import Winnowing
-from scanoss.scanossapi import ScanossApi
 
 from ..analyser import TextFileAnalyser
 from ..commentparser.language import Lang, classify
@@ -35,7 +33,3 @@ class ScanossAnalyser(TextFileAnalyser):
         else:
             return None
 
-    @staticmethod
-    def scan(wfps: t.List[str]) -> t.Optional[dict]:
-        api = ScanossApi()
-        return api.scan('\n'.join(wfps))

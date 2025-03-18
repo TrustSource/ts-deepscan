@@ -23,11 +23,12 @@ dependencies = [
     "click==8.1.7",
     "osadl_matrix==2024.5.22.10535",
     "pyminr~=0.1.1",
-    "scancode-toolkit-mini~=32.3.2",
+    "scancode-toolkit~=32.3.2;platform_machine=='x86_64'",
+    "scancode-toolkit-mini~=32.3.2;platform_machine=='arm64'",
     "dataclasses-json~=0.6.7",
     "gitignore-parser~=0.1.11",
     "tqdm~=4.67.0",
-    "scanoss~=1.19.4",
+    "scanoss~=1.20.4",
     "yara-python~=4.5.0"
 ]
 

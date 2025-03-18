@@ -23,15 +23,12 @@ class CryptoAnalyser(TextFileAnalyser):
         }
 
     def analyse(self, path: Path, root: t.Optional[Path] = None):
-        result = []
+        result = set()
 
         def _report_result(algorithm, coding):
-            result.append({
-                'algorithm': algorithm,
-                'coding': coding
-            })
+            result.add((algorithm, coding))
 
         with path.open('rb') as fp:
             pyminr.find_crypto_algorithms(fp.read(), _report_result)
 
-        return result
+        return [{'algorithm': res[0], 'coding': res[1]} for res in result]

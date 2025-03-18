@@ -15,7 +15,7 @@ from dataclasses_json.core import _ExtendedEncoder
 
 from .config import get_datasetdir
 
-from .scanner import Scan
+from .scanner import Scan, compute_summary
 from .scanner.Scanner import *
 from .scanner.PoolScanner import PoolScanner
 
@@ -162,8 +162,7 @@ def execute_scan(paths: [Path], _scanner: Scanner, title='') -> Scan:
                  stats=stats,  # prepare_stats(result, no_result, stats)
                  options=_scanner.options)
 
-    _scan.compute_licenses_compatibility()
-
+    compute_summary(_scan)
     return _scan
 
 
