@@ -1,6 +1,6 @@
-import sys
 import typing as t
 import functools
+import warnings
 
 from time import time
 
@@ -42,10 +42,14 @@ def detect_copyrights(text: str,
 def detect_licenses(text: str,
                     include_text: bool = False,
                     timeout=-1) -> t.Tuple[list, list, t.Optional[str]]:
-    from licensedcode.detection import detect_licenses
-    from licensedcode.cache import build_spdx_license_expression, get_cache
-    from packagedcode.utils import combine_expressions
-    from scancode.interrupt import interruptible
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        from licensedcode.detection import detect_licenses
+        from licensedcode.cache import build_spdx_license_expression, get_cache
+        from packagedcode.utils import combine_expressions
+        from scancode.interrupt import interruptible
 
     detect = functools.partial(detect_licenses,
                                query_string=text,

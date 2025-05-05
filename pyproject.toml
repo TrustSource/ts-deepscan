@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'ts-deepscan'
-version = '2.3.0'
+version = '2.3.1'
 authors = [
     { name='EACG GmbH' }
 ]
@@ -25,7 +25,7 @@ dependencies = [
     "requests~=2.32.3",
     "click==8.1.7",
     "osadl_matrix==2024.5.22.10535",
-    "pyminr~=0.1.1",
+    "pyminr~=0.1.2",
     "scancode-toolkit~=32.3.2;platform_machine=='x86_64'",
     "scancode-toolkit-mini~=32.3.2;platform_machine=='arm64'",
     "dataclasses-json~=0.6.7",
