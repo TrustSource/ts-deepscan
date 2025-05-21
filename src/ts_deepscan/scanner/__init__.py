@@ -19,13 +19,14 @@ dataclasses_json.cfg.global_config.decoders[datetime] = datetime.fromisoformat
 @dataclass_json
 @dataclass
 class Scan:
+    uid: t.Optional[str] = None
+    url: t.Optional[str] = None
     result: dict = field(default_factory=lambda: {})
     no_result: list = field(default_factory=lambda: [])
     options: dict = field(default_factory=lambda: {})
     time: datetime = field(default_factory=lambda: datetime.now())
     stats: dict = field(default_factory=lambda: {})
     summary: dict = field(default_factory=lambda: {})
-
 
 def _add_copyright_info(info: t.Union[dict, t.List[dict]], copyrights: dict):
     if type(info) is list:

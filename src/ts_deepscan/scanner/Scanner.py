@@ -10,6 +10,7 @@ import tempfile
 import logging
 
 from pathlib import Path
+from shutil import ReadError
 from typing import List, Tuple, Set, Optional, Callable
 from gitignore_parser import parse_gitignore
 
@@ -134,7 +135,7 @@ class Scanner(object):
 
                         # Do not apply gitignores to extracted archives
                         yield from walk(extract_dir, unpack_path, [])
-                    except ValueError:
+                    except (ValueError, ReadError):
                         pass
                 else:
                     yield _path.resolve(), _root.resolve() if _root else None

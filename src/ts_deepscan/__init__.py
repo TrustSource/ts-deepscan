@@ -198,7 +198,7 @@ baseUrl = 'https://api.prod.trustsource.io/deepscan'
 __DIRECT_UPLOAD_SIZE_LIMIT = 100 * 1024  # 100KB: Upload limit without an intermediate storage
 
 
-def upload_data(data: dict, module_name: str, api_key: str, base_url=baseUrl) -> Optional[Tuple[str, str]]:
+def upload_scan(scan: Scan, module_name: str, api_key: str, base_url=baseUrl) -> bool:
     params = {
         'module': module_name
     }
@@ -209,7 +209,8 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url=baseUrl) ->
         'x-api-key': api_key
     }
 
-    data = bytes(json.dumps(data, cls=_ExtendedEncoder), 'utf-8')
+    # noinspection PyUnresolvedReferences
+    data = bytes(json.dumps(scan.to_dict(), cls=_ExtendedEncoder), 'utf-8')
     compressed = gzip.compress(data)
 
     if len(data) <= __DIRECT_UPLOAD_SIZE_LIMIT:
@@ -233,13 +234,16 @@ def upload_data(data: dict, module_name: str, api_key: str, base_url=baseUrl) ->
         url = resp.get('url', '')
 
         if uid:
-            return uid, url
+            scan.uid = uid
+            scan.url = url
+
+            return True
 
     except ValueError as err:
         print('Cannot decode response')
         print(err)
 
-    return None
+    return False
 
 
 def _upload_with_request(data: bytes, headers: dict, params: dict, base_url=baseUrl) -> requests.Response:
