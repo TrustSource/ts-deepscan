@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'ts-deepscan'
-version = '2.3.3'
+version = '2.3.4'
 authors = [
     { name='EACG GmbH' }
 ]

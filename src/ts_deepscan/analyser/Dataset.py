@@ -23,8 +23,8 @@ class Dataset(object):
             return licenses.items()
 
     @property
-    def data(self):
-        if not self.__data:
+    def data(self) -> t.Dict[str, t.Any]:
+        if self.__data is None:
             raise Exception('Dataset is not loaded.')
 
         return self.__data

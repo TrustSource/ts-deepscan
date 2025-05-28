@@ -4,6 +4,8 @@ import multiprocessing as mp
 import multiprocessing.pool
 import multiprocessing.queues
 
+from threading import Lock
+
 
 def get_context() -> mp.context.DefaultContext:
     """
@@ -56,12 +58,14 @@ class PoolProcess(_ctx.Process):
 
 
 _pool: t.Optional[Pool] = None
+_pool_lock: Lock = Lock()
 
 
 def get_pool() -> Pool:
     global _pool
 
-    if not _pool:
-        _pool = Pool(context=_ctx.get_context())
+    with _pool_lock:
+        if not _pool:
+            _pool = Pool(context=_ctx.get_context())
 
-    return _pool
+        return _pool

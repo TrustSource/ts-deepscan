@@ -28,6 +28,7 @@ class Scan:
     stats: dict = field(default_factory=lambda: {})
     summary: dict = field(default_factory=lambda: {})
 
+
 def _add_copyright_info(info: t.Union[dict, t.List[dict]], copyrights: dict):
     if type(info) is list:
         for i in info:

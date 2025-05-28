@@ -170,9 +170,6 @@ class Scanner(object):
             self.totalTasks = len(files)
             self.finishedTasks = 0
 
-            if self.totalTasks == 0:
-                return {}
-
             return self._do_scan(files)
 
         finally:

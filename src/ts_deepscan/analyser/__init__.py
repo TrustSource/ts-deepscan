@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 
 class FileAnalyser(ABC):
+    # Analysis timeout in seconds
     DEFAULT_TIMEOUT = 60
 
     # Max file size in bytes

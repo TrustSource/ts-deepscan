@@ -72,11 +72,11 @@ def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
 @click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
 def upload(path: pathlib.Path, module_name: str, api_key: str, base_url: str):
     with path.open('r') as fp:
-        scan = Scan.from_json(fp.read())
+        _scan = Scan.from_json(fp.read())
 
-    if upload_scan(scan, module_name, api_key, base_url):
+    if upload_scan(_scan, module_name, api_key, base_url):
         print("Transfer success!")
-        if url := scan.url:
+        if url := _scan.url:
             print(f"Results are available at: {url}")
     else:
         print('Files scan was not uploaded correctly')

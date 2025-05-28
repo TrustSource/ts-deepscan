@@ -1,10 +1,9 @@
 import logging
-import threading
 import typing as t
 
 from pathlib import Path
 from concurrent import futures
-from threading import Thread, Lock
+from threading import Thread
 from queue import Queue
 
 from .pool import get_pool
@@ -47,30 +46,40 @@ class PoolScanner(Scanner):
                         relpath: result
                     })
 
-        lock = Lock()
+        def report_results(relpath: str, result: dict, errors: t.List[str]):
+            results_queue.put((relpath, result, errors))
+
         pool = futures.ThreadPoolExecutor()
 
         tasks = []
         for path, root in files:
-            task = pool.submit(PoolScanner._scan_file_parallel,
-                               path, root, self.analysers, self._task_timeout, results_queue, lock)
+            task = pool.submit(self._get_scan_file_fn(), path, root, report_results)
             tasks.append(task)
 
         results_processing = Thread(target=process_results)
         results_processing.start()
 
         futures.wait(tasks, return_when=futures.ALL_COMPLETED)
+
+        #for task in tasks:
+            #print(task)
+
         results_queue.put(None)
 
         return results
+
+    def _get_scan_file_fn(self) -> t.Callable[[Path, t.Optional[Path], t.Callable[[str, dict, t.List[str]], None]], None]:
+        def _scan_file(path: Path, root: t.Optional[Path], report_results: t.Callable[[str, dict, t.List[str]], None]):
+            PoolScanner._scan_file_parallel(path, root, self.analysers, self._task_timeout, report_results)
+
+        return _scan_file
 
     @staticmethod
     def _scan_file_parallel(path: Path,
                             root: t.Optional[Path],
                             analysers: [FileAnalyser],
                             timeout: int,
-                            results: Queue,
-                            lock: Lock):
+                            report_results: t.Callable[[str, dict, t.List[str]], None]):
         result = {}
         errors = []
 
@@ -89,22 +98,20 @@ class PoolScanner(Scanner):
                 errors.append(msg)
             return _callback
 
-        with lock:
-            pool = get_pool()
-            tasks = [pool.apply_async(
-                _apply_analysis, (analyser, path, root),
-                callback=task_completed(analyser.category_name),
-                error_callback=task_failed(analyser.category_name))
-                    for analyser in analysers if analyser.accepts(path)]
+        pool = get_pool()
+        tasks = [pool.apply_async(
+            _apply_analysis, (analyser, path, root),
+            callback=task_completed(analyser.category_name),
+            error_callback=task_failed(analyser.category_name))
+                for analyser in analysers if analyser.accepts(path)]
 
         for _task in tasks:
             _task.wait(timeout=timeout)
             if not _task.ready():
-                with lock:
-                    if worker := pool.find_worker(_task):
-                        worker.terminate()
+                if worker := pool.find_worker(_task):
+                    worker.terminate()
 
-        results.put((relpath, result, errors))
+        report_results(relpath, result, errors)
 
 
 def _apply_analysis(analyser: FileAnalyser, path: Path, root: t.Optional[Path]) -> dict:
