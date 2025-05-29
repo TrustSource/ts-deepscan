@@ -99,8 +99,10 @@ class Scanner(object):
 
     @property
     def options(self) -> dict:
-        opts = [a.options for a in self.analysers]
-        return functools.reduce(lambda a, b: {**a, **b}, opts)
+        if opts := [a.options for a in self.analysers]:
+            return functools.reduce(lambda a, b: {**a, **b}, opts)
+        else:
+            return {}
 
     @property
     def cancelled(self):
