@@ -1,20 +1,19 @@
 import logging
 import typing as t
 
+import ts_deepscan.util as util
+
 from pathlib import Path
 from concurrent import futures
-from threading import Thread
+from threading import Thread, RLock
 from queue import Queue
 
-from .pool import get_pool
+from .pool import Pool
 from .Scanner import Scanner
 from ..analyser import FileAnalyser
 
 
 class PoolScanner(Scanner):
-    def __init_subclass__(cls, enable_logging=True, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.__enable_logging = enable_logging
 
     def __init__(self, num_jobs: int, task_timeout=FileAnalyser.DEFAULT_TIMEOUT, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,9 +21,19 @@ class PoolScanner(Scanner):
         self._num_jobs = num_jobs
         self._task_timeout = task_timeout
 
-    def _log(self, msg, lvl=logging.INFO):
-        if self.__class__.__enable_logging:
-            logging.log(lvl, msg)
+        self._pool: t.Optional[Pool] = None
+        self._pool_lock: RLock = RLock()
+
+    def _get_pool(self):
+        self._pool_lock.acquire()
+        try:
+            if not self._pool:
+                self._pool = Pool.create(self._num_jobs)
+                util.info(f'Created a new pool with {self._pool.num_processes} workers')
+        finally:
+            self._pool_lock.release()
+
+        return self._pool
 
     def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
         results = {}
@@ -39,14 +48,19 @@ class PoolScanner(Scanner):
 
                 relpath, result, errors = res
 
-                self._notifyCompletion(relpath, result, errors)
+                error_msgs = []
+                for cat, err in errors.items():
+                    util.error(err)
+                    error_msgs.append(f'An error occured while scanning {relpath} using \'{cat}\' analyser')
+
+                self._notifyCompletion(relpath, result, error_msgs)
 
                 if result:
                     results.update({
                         relpath: result
                     })
 
-        def report_results(relpath: str, result: dict, errors: t.List[str]):
+        def report_results(relpath: str, result: dict, errors: t.Dict[str, str]):
             results_queue.put((relpath, result, errors))
 
         pool = futures.ThreadPoolExecutor()
@@ -59,18 +73,30 @@ class PoolScanner(Scanner):
         results_processing = Thread(target=process_results)
         results_processing.start()
 
+        logging.debug("Waiting for tasks to complete...")
         futures.wait(tasks, return_when=futures.ALL_COMPLETED)
-
-        #for task in tasks:
-            #print(task)
+        logging.debug("All tasks completed.")
 
         results_queue.put(None)
+        results_processing.join()
+        logging.debug("Results processing thread has finished.")
 
         return results
 
-    def _get_scan_file_fn(self) -> t.Callable[[Path, t.Optional[Path], t.Callable[[str, dict, t.List[str]], None]], None]:
-        def _scan_file(path: Path, root: t.Optional[Path], report_results: t.Callable[[str, dict, t.List[str]], None]):
-            PoolScanner._scan_file_parallel(path, root, self.analysers, self._task_timeout, report_results)
+    def _get_scan_file_fn(self) -> t.Callable[[Path,
+                                               t.Optional[Path],
+                                               t.Callable[[str, dict, t.Dict[str, str]], None]], None]:
+
+        def _scan_file(path: Path,
+                       root: t.Optional[Path],
+                       report_results: t.Callable[[str, dict, t.Dict[str, str]], None]):
+
+            PoolScanner._scan_file_parallel(path,
+                                            root,
+                                            self.analysers,
+                                            self._task_timeout,
+                                            report_results,
+                                            self._get_pool())
 
         return _scan_file
 
@@ -79,9 +105,10 @@ class PoolScanner(Scanner):
                             root: t.Optional[Path],
                             analysers: [FileAnalyser],
                             timeout: int,
-                            report_results: t.Callable[[str, dict, t.List[str]], None]):
+                            report_results: t.Callable[[str, dict, t.Dict[str, str]], None],
+                            pool: Pool):
         result = {}
-        errors = []
+        errors = {}
 
         relpath = str(path.relative_to(root) if root else path)
 
@@ -93,12 +120,9 @@ class PoolScanner(Scanner):
 
         def task_failed(_cat):
             def _callback(_err):
-                msg = f'An error occured while scanning {relpath} using \'{_cat}\' analyser'
-                logging.exception(msg)
-                errors.append(msg)
+                errors[_cat] = _err
             return _callback
 
-        pool = get_pool()
         tasks = [pool.apply_async(
             _apply_analysis, (analyser, path, root),
             callback=task_completed(analyser.category_name),

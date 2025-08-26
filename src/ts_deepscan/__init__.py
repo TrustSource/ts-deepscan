@@ -18,6 +18,7 @@ from .config import get_datasetdir
 from .scanner import Scan, compute_summary
 from .scanner.Scanner import *
 from .scanner.PoolScanner import PoolScanner
+from .scanner.Scanner import Scanner
 
 from .analyser import FileAnalyser
 from .analyser.Dataset import Dataset
@@ -77,7 +78,6 @@ def create_scanner(jobs: int = -1,
                    ignore_pattern: tuple = tuple(),
                    default_gitignores: Optional[List[Path]] = None,
                    dataset: Optional[Dataset] = None) -> Scanner:
-
     if sys.platform == 'win32' and include_crypto:
         if jobs > 1:
             print('Warning: parallel analysis is unavailable on Windows when \'include-crypto\' flag is enabled')
@@ -105,6 +105,10 @@ def create_scanner(jobs: int = -1,
                 rules_path=yara_rules))
         else:
             print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
+
+    #return Scanner(analysers=analysers,
+    #               ignore_patterns=list(ignore_pattern),
+    #               default_gitignores=default_gitignores)
 
     return PoolScanner(num_jobs=jobs,
                        task_timeout=timeout,

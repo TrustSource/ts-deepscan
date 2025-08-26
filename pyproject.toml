@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'ts-deepscan'
-version = '2.3.4'
+version = '2.3.5'
 authors = [
     { name='EACG GmbH' }
 ]
@@ -27,8 +27,9 @@ dependencies = [
     "osadl_matrix==2024.5.22.10535",
     "pyminr~=0.1.1;sys_platform!='darwin'",
     "pyminr~=0.1.2;sys_platform=='darwin'",
-    "scancode-toolkit~=32.3.2;platform_machine=='x86_64'",
-    "scancode-toolkit-mini~=32.3.2;platform_machine=='arm64'",
+    "scancode-toolkit==32.3.2;platform_machine=='x86_64'",
+    "scancode-toolkit-mini==32.3.2;platform_machine=='arm64'",
+    "normality<3.0.0", # normality >=3.0.0 requires pyicu, avoid it for now as it needs ICU system libs
     "dataclasses-json~=0.6.7",
     "gitignore-parser~=0.1.11",
     "tqdm~=4.67.0",

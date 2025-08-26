@@ -7,7 +7,8 @@ import fnmatch
 import functools
 import shutil
 import tempfile
-import logging
+
+import ts_deepscan.util as util
 
 from pathlib import Path
 from shutil import ReadError
@@ -92,7 +93,7 @@ class Scanner(object):
                     result[analyse.category_name] = res
             except: # noqa
                 msg = f'An error occured while scanning {relpath} using \'{analyse.category_name}\' analyser'
-                logging.exception(msg)
+                util.error(msg)
                 errors.append(msg)
 
         return relpath, result, errors

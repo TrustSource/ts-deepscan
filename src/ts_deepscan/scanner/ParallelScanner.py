@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
-import logging
 import queue
 import typing as t
 import multiprocessing as mp
+
+import ts_deepscan.util as util
 
 from pathlib import Path
 
@@ -33,20 +34,10 @@ class ParallelScanner(Scanner):
 
     results_wait_time = 60
 
-    __enable_logging = True
-
-    def __init_subclass__(cls, enable_logging=True, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.__enable_logging = enable_logging
-
     def __init__(self, num_jobs: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._num_jobs = num_jobs if num_jobs > 0 else mp.cpu_count() - 1
-
-    def _log(self, msg, lvl=logging.INFO):
-        if self.__class__.__enable_logging:
-            logging.log(lvl, msg)
 
     def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
         results = {}
@@ -56,7 +47,7 @@ class ParallelScanner(Scanner):
 
         workers = self._create_workers(tasks, task_results, min(self._num_jobs, len(files)))
 
-        self._log(f'Num of workers: {self._num_jobs}')
+        util.info(f'Num of workers: {self._num_jobs}')
 
         for w in workers:
             w.start()
@@ -73,7 +64,7 @@ class ParallelScanner(Scanner):
                 relpath, result, errors = task_results.get(timeout=ParallelScanner.results_wait_time)
 
             except queue.Empty:
-                self._log(f'No results received within {ParallelScanner.results_wait_time} seconds. Checking status...')
+                util.info(f'No results received within {ParallelScanner.results_wait_time} seconds. Checking status...')
 
                 w_live = []
                 w_failed = []
@@ -86,9 +77,9 @@ class ParallelScanner(Scanner):
 
                 if len(w_failed) > 0:
                     for w in w_failed:
-                        self._log(f'Worker exited with code {w.exitcode}', logging.ERROR)
+                        util.error(f'Worker exited with code {w.exitcode}')
 
-                    self._log('Restarting failed workers')
+                    util.info('Restarting failed workers')
 
                     w_restarted = self._create_workers(tasks, task_results, len(w_failed))
                     for w in w_restarted:
@@ -101,7 +92,7 @@ class ParallelScanner(Scanner):
                     continue
 
                 else:
-                    self._log(f'All workers exited')
+                    util.info(f'All workers exited')
                     break
 
             self._notifyCompletion(relpath, result, errors)

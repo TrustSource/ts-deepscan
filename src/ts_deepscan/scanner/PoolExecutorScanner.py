@@ -1,6 +1,7 @@
-import logging
 import typing as t
 import concurrent.futures as futures
+
+import ts_deepscan.util as util
 
 from pathlib import Path
 
@@ -9,19 +10,12 @@ from ..analyser import FileAnalyser
 
 
 class PoolExecutorScanner(Scanner):
-    def __init_subclass__(cls, enable_logging=True, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.__enable_logging = enable_logging
 
     def __init__(self, num_jobs: int, task_timeout=FileAnalyser.DEFAULT_TIMEOUT, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._num_jobs = num_jobs
         self._task_timeout = task_timeout
-
-    def _log(self, msg, lvl=logging.INFO):
-        if self.__class__.__enable_logging:
-            logging.log(lvl, msg)
 
     def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
         results = {}
@@ -64,11 +58,11 @@ class PoolExecutorScanner(Scanner):
                 task_to_cancel = tasks.pop()
 
                 if tp := task_paths[task_to_cancel]:
-                    print(f"Scan of {tp} has been cancelled")
+                    util.info(f"Scan of {tp} has been cancelled")
 
                 task_to_cancel.cancel()
 
         executor.shutdown(wait=False)
-        print(f"Shutdown scanner...")
+        util.info(f"Shutdown scanner...")
 
         return results

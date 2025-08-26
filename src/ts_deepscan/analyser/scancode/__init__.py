@@ -9,8 +9,12 @@ def detect_copyrights(text: str,
                       copyrights=True, holders=True, authors=True,
                       include_years=True, include_allrights=False,
                       timeout=-1):
-    from cluecode.copyrights import Detection, detect_copyrights_from_lines
-    from scancode.interrupt import interruptible
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        from cluecode.copyrights import Detection, detect_copyrights_from_lines
+        from scancode.interrupt import interruptible
 
     numbered_lines = list(enumerate(text.splitlines()))
 
@@ -21,11 +25,13 @@ def detect_copyrights(text: str,
                                include_authors=authors,
                                include_copyright_years=include_years,
                                include_copyright_allrights=include_allrights)
-    if timeout > 0:
-        detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
-        _, detections = interruptible(detect, timeout=timeout)
-    else:
-        detections = detect()
+    # if timeout > 0:
+    #     detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
+    #     _, detections = interruptible(detect, timeout=timeout)
+    # else:
+    #     detections = detect()
+
+    detections = detect()
 
     copyrights, holders, authors = Detection.split(detections)
 
@@ -55,11 +61,13 @@ def detect_licenses(text: str,
                                query_string=text,
                                include_text=include_text)
 
-    if timeout > 0:
-        detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
-        _, detections = interruptible(detect, timeout=timeout)
-    else:
-        detections = detect()
+    # if timeout > 0:
+    #     detect = functools.partial(detect, deadline=time() + int(timeout / 2.5))
+    #     _, detections = interruptible(detect, timeout=timeout)
+    # else:
+    #     detections = detect()
+
+    detections = detect()
 
     lic_detections = []
     lic_expressions = []
