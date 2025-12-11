@@ -3,19 +3,18 @@ import typing as t
 from pathlib import Path
 from scanoss.winnowing import Winnowing
 
-from ..analyser import TextFileAnalyser
+from ..analyser import SourceCodeAnalyser
 from ..commentparser.language import Lang, classify
 
 
-class ScanossAnalyser(TextFileAnalyser):
-    category_name = 'scanoss'
-
+class ScanossAnalyser(SourceCodeAnalyser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._winnowing = Winnowing()
 
-    def _match(self, path: Path):
-        return classify(path) != Lang.Unknown and super()._match(path)
+    @property
+    def category(self) -> str:
+        return 'scanoss'
 
     @property
     def options(self) -> dict:

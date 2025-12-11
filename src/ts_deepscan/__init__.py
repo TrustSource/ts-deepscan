@@ -33,9 +33,15 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 def __load_spacy_models():
     import spacy
+    import subprocess
+    import sys
 
     if not spacy.util.is_package('en_core_web_sm'):
-        spacy.cli.download('en_core_web_sm')
+        try:
+            # Use subprocess to avoid type checker issues with spacy.cli
+            subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'en_core_web_sm'])
+        except subprocess.CalledProcessError as e:
+            print(f'Failed to download spacy model: {e}')
         print()
 
     if not spacy.util.is_package('en_core_web_sm'):
@@ -47,13 +53,17 @@ def create_default_analysers(dataset: Dataset,
                              timeout: int,
                              max_file_size: int,
                              include_copyright: bool,
-                             include_crypto: bool) -> List[FileAnalyser]:
-    analysers = [LicenseAnalyser(dataset, include_copyright,
+                             include_crypto: bool) -> t.List[FileAnalyser]:
+    
+    analysers: t.List[FileAnalyser] = [
+        LicenseAnalyser(dataset, include_copyright,
                                  timeout=timeout,
                                  max_file_size=max_file_size),
-                 CommentAnalyser(dataset, include_copyright,
+
+        CommentAnalyser(dataset, include_copyright,
                                  timeout=timeout,
-                                 max_file_size=max_file_size)]
+                                 max_file_size=max_file_size)
+    ]
 
     if include_crypto:
         try:
@@ -76,8 +86,10 @@ def create_scanner(jobs: int = -1,
                    include_yara: bool = False,
                    yara_rules: t.Optional[Path] = None,
                    ignore_pattern: tuple = tuple(),
-                   default_gitignores: Optional[List[Path]] = None,
-                   dataset: Optional[Dataset] = None) -> Scanner:
+                   default_gitignores: t.Optional[t.List[Path]] = None,
+                   dataset: t.Optional[Dataset] = None,
+                   use_cache: bool = True) -> Scanner:
+    
     if sys.platform == 'win32' and include_crypto:
         if jobs > 1:
             print('Warning: parallel analysis is unavailable on Windows when \'include-crypto\' flag is enabled')
@@ -95,16 +107,22 @@ def create_scanner(jobs: int = -1,
                                          include_crypto=include_crypto)
 
     if include_scanoss_wfp:
-        analysers.append(ScanossAnalyser(timeout=timeout))
+        analysers.append(
+            ScanossAnalyser(timeout=timeout)
+        )
 
     if include_yara:
         if yara_rules:
-            analysers.append(YaraAnalyser(
-                timeout=timeout,
-                max_file_size=max_file_size,
-                rules_path=yara_rules))
+            analysers.append(
+                YaraAnalyser(timeout=timeout,
+                             max_file_size=max_file_size,
+                             rules_path=yara_rules))
         else:
             print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
+
+    if use_cache:
+        from .analyser.CachedAnalyser import CachedAnalyzer
+        analysers = [CachedAnalyzer(analyser) for analyser in analysers]
 
     #return Scanner(analysers=analysers,
     #               ignore_patterns=list(ignore_pattern),
@@ -126,9 +144,9 @@ def create_dataset() -> Dataset:
     return dataset
 
 
-def execute_scan(paths: [Path], _scanner: Scanner, title='') -> Scan:
+def execute_scan(paths: t.List[Path], _scanner: Scanner, title='') -> Scan:
     no_result = []
-    progress_bar: Optional[tqdm] = None
+    progress_bar: t.Optional[tqdm] = None
 
     def onScanCompleted(p, r, errs):
         if not r:
@@ -197,7 +215,8 @@ def prepare_stats(result, no_result, stats):
     return stats
 
 
-baseUrl = 'https://api.prod.trustsource.io/deepscan'
+#baseUrl = 'https://api.prod.trustsource.io/deepscan'
+baseUrl = 'https://api.trustsource.io/v2/repository'
 
 __DIRECT_UPLOAD_SIZE_LIMIT = 100 * 1024  # 100KB: Upload limit without an intermediate storage
 
@@ -213,8 +232,8 @@ def upload_scan(scan: Scan, module_name: str, api_key: str, base_url=baseUrl) ->
         'x-api-key': api_key
     }
 
-    # noinspection PyUnresolvedReferences
-    data = bytes(json.dumps(scan.to_dict(), cls=_ExtendedEncoder), 'utf-8')
+    # Use dataclasses_json method - type: ignore to suppress type checker warning
+    data = bytes(json.dumps(scan.to_dict(), cls=_ExtendedEncoder), 'utf-8')  # type: ignore[attr-defined]
     compressed = gzip.compress(data)
 
     if len(data) <= __DIRECT_UPLOAD_SIZE_LIMIT:
@@ -234,8 +253,8 @@ def upload_scan(scan: Scan, module_name: str, api_key: str, base_url=baseUrl) ->
     try:
         resp = resp.json()
 
-        uid = resp.get('uid', '')
-        url = resp.get('url', '')
+        uid = resp.get('uid')
+        url = resp.get('url')
 
         if uid:
             scan.uid = uid
@@ -259,7 +278,7 @@ def _upload_with_request(data: bytes, headers: dict, params: dict, base_url=base
 
     resp = resp.json()
 
-    if (upload_url := resp.get('upload_url', None)) and (uid := resp.get('uid', None)):
+    if (upload_url := resp.get('upload_url')) and (uid := resp.get('uid')):
         resp = requests.put(upload_url, data=data)
         if resp.status_code not in range(200, 300):
             print(f'Storage upload failed. Code {resp.status_code}: {resp.text}')

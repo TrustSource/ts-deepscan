@@ -3,18 +3,17 @@ import typing as t
 
 from pathlib import Path
 
-from ..analyser import TextFileAnalyser
+from ..analyser import SourceCodeAnalyser
 from ..commentparser.language import Lang, classify
 
 
-class CryptoAnalyser(TextFileAnalyser):
-    category_name = 'crypto'
-
+class CryptoAnalyser(SourceCodeAnalyser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _match(self, path: Path):
-        return classify(path) != Lang.Unknown and super()._match(path)
+    @property
+    def category(self) -> str:
+        return 'crypto'
 
     @property
     def options(self) -> dict:

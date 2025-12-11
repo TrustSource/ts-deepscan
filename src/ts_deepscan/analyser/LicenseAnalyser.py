@@ -7,20 +7,32 @@ import re
 from .textutils import *
 
 from . import TextFileAnalyser
-from ..analyser import Dataset
+from ..analyser.Dataset import Dataset
 from ..commentparser.language import Lang, classify
 
 MAX_LICENSE_TEXT_LENGTH = 100000
 
+_common_license_file_names = [
+    "LICENSE", "COPYING", "COPYRIGHT", "NOTICE", "ABOUT", "INSTALL", "README", "CODE_OF_CONDUCT"
+]
 
 class LicenseAnalyser(TextFileAnalyser):
-    category_name = 'license'
-
-    def __init__(self, dataset: Dataset, include_copyright=False, *args, **kwargs):
+    def __init__(self, 
+                 dataset: Dataset, 
+                 include_copyright=False,
+                 analyse_all_text_files=False,
+                 *args, 
+                 **kwargs):
+        
         super().__init__(*args, **kwargs)
 
         self.dataset = dataset
         self.include_copyright = include_copyright
+        self.analyse_all_text_files = analyse_all_text_files
+
+    @property
+    def category(self) -> str:
+        return 'license'
 
     def _match(self, path):
         return classify(path) == Lang.Unknown and super()._match(path)
@@ -30,19 +42,20 @@ class LicenseAnalyser(TextFileAnalyser):
         # TODO: add categorization of options: 'include_copyright' -> 'license.include_copyright'
         # TODO: rename 'includeCopyright' -> 'include_copyright'
         return {
-            'includeCopyright': self.include_copyright
+            'includeCopyright': self.include_copyright,
+            'analyseAllTextFiles': self.analyse_all_text_files
         }
 
     def analyse(self, path: Path, root: t.Optional[Path] = None):
         with path.open('r', encoding='utf-8', errors="surrogateescape") as fp:
             result = None
             content = fp.read()
-
+            
             if len(content) < MAX_LICENSE_TEXT_LENGTH:
-                if re.search('LICENSE|COPYING|COPYRIGHT', path.name, re.IGNORECASE):
+                if re.search('|'.join(_common_license_file_names), path.name, re.IGNORECASE):
                     result = analyse_license_text(content, self.dataset, search_copyright=self.include_copyright)
 
-            if result is None:
+            if result is None and self.analyse_all_text_files:
                 result = analyse_text(content, self.dataset,
                                       timeout=self.timeout,
                                       search_copyright=self.include_copyright)

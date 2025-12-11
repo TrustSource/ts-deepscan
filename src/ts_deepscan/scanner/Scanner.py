@@ -10,15 +10,15 @@ import tempfile
 
 import ts_deepscan.util as util
 
+import typing as t
 from pathlib import Path
 from shutil import ReadError
-from typing import List, Tuple, Set, Optional, Callable
 from gitignore_parser import parse_gitignore
 
 from ..analyser import FileAnalyser
 
 
-def _register_unpack_formats() -> Set[str]:
+def _register_unpack_formats() -> t.Set[str]:
     """
     Registers unpack formats and returns all supported archive extensions.
     """
@@ -26,10 +26,13 @@ def _register_unpack_formats() -> Set[str]:
     def unpack_zip(filename, extract_dir):
         shutil.unpack_archive(filename, extract_dir, format='zip')
 
-    if "wheel" not in shutil._UNPACK_FORMATS:  # noqa
+    # Check for registered formats using get_unpack_formats instead of private _UNPACK_FORMATS
+    registered_formats = {fmt[0] for fmt in shutil.get_unpack_formats()}
+    
+    if "wheel" not in registered_formats:
         shutil.register_unpack_format('wheel', ['.whl'], unpack_zip)
 
-    if "jar" not in shutil._UNPACK_FORMATS:  # noqa
+    if "jar" not in registered_formats:
         shutil.register_unpack_format('jar', ['.jar'], unpack_zip)
 
     return functools.reduce(lambda exts, fmt: exts.union(set(fmt[1])), shutil.get_unpack_formats(), set())
@@ -42,11 +45,11 @@ DEFAULT_FILE_MAX_SIZE = 1024 * int(os.environ.get('TS_DEPSCAN_FILE_MAX_SIZE', 10
 
 class Scanner(object):
     def __init__(self,
-                 analysers: [FileAnalyser],
+                 analysers: t.List[FileAnalyser],
                  file_max_size: int = DEFAULT_FILE_MAX_SIZE,
-                 ignore_patterns: Optional[List[str]] = None,
+                 ignore_patterns: t.Optional[t.List[str]] = None,
                  ignore_hidden_files: bool = True,
-                 default_gitignores: Optional[List[Path]] = None,
+                 default_gitignores: t.Optional[t.List[Path]] = None,
                  unpack_archives: bool = True):
 
         self.analysers = analysers
@@ -68,20 +71,20 @@ class Scanner(object):
         # Result callbacks
 
         # Callback accepting a relative path
-        self.onPathIgnored: Optional[Callable[[str], None]] = None
+        self.onPathIgnored: t.Optional[t.Callable[[str], None]] = None
         # Callback accepting relative path and results
-        self.onFileScanCompleted: Optional[Callable[[str, dict, list], None]] = None
+        self.onFileScanCompleted: t.Optional[t.Callable[[str, dict, list], None]] = None
         # Callback accepting number of finished and total tasks
-        self.onProgress: Optional[Callable[[int, int], None]] = None
+        self.onProgress: t.Optional[t.Callable[[int, int], None]] = None
 
         # Running
         self._cancelled = False
 
         # Cleanup files
-        self._cleanup: List[Path] = []
+        self._cleanup: t.List[Path] = []
 
     @staticmethod
-    def _scan_file(path: Path, analysers: [FileAnalyser], root: Optional[Path]) -> Tuple[str, dict, List[str]]:
+    def _scan_file(path: Path, analysers: t.List[FileAnalyser], root: t.Optional[Path]) -> t.Tuple[str, dict, t.List[str]]:
         result = {}
         errors = []
 
@@ -90,9 +93,9 @@ class Scanner(object):
         for analyse in analysers:
             try:
                 if analyse.accepts(path) and (res := analyse(path, root=root)):
-                    result[analyse.category_name] = res
+                    result[analyse.category] = res
             except: # noqa
-                msg = f'An error occured while scanning {relpath} using \'{analyse.category_name}\' analyser'
+                msg = f'An error occured while scanning {relpath} using \'{analyse.category}\' analyser'
                 util.error(msg)
                 errors.append(msg)
 
@@ -109,8 +112,8 @@ class Scanner(object):
     def cancelled(self):
         return self._cancelled
 
-    def run(self, paths: [Path]) -> dict:
-        files: List[Tuple[Path, Optional[Path]]] = []
+    def run(self, paths: t.List[Path]) -> dict:
+        files: t.List[t.Tuple[Path, t.Optional[Path]]] = []
 
         if self.unpack_folder:
             unpack_path = self.unpack_folder
@@ -118,7 +121,7 @@ class Scanner(object):
             temp_dir = tempfile.TemporaryDirectory()
             unpack_path = Path(temp_dir.name)
 
-        def match(_path: Path, gitignores: List[Callable[[Path], bool]]):
+        def match(_path: Path, gitignores: t.List[t.Callable[[Path], bool]]):
             if self.ignore_hidden_files and _path.name.startswith('.'):
                 return False
 
@@ -127,7 +130,7 @@ class Scanner(object):
 
             return all(not gitignore(_path) for gitignore in gitignores)
 
-        def walk(_path: Path, _root: Optional[Path], gitignores: List[Callable[[Path], bool]]):
+        def walk(_path: Path, _root: t.Optional[Path], gitignores: t.List[t.Callable[[Path], bool]]):
             if _path.is_file():
                 ext = ''.join(_path.suffixes)
                 if self.unpack_archives and (archive_ext := next((e for e in _archive_exts if ext.endswith(e)), None)):
@@ -181,7 +184,7 @@ class Scanner(object):
     def cancel(self):
         self._cancelled = True
 
-    def _do_scan(self, files: List[Tuple[Path, Path]]) -> dict:
+    def _do_scan(self, files: t.List[t.Tuple[Path, t.Optional[Path]]]) -> dict:
         results = {}
 
         for path, root in files:

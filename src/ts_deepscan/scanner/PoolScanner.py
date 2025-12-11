@@ -35,9 +35,9 @@ class PoolScanner(Scanner):
 
         return self._pool
 
-    def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
+    def _do_scan(self, files: t.List[t.Tuple[Path, t.Optional[Path]]]) -> dict:
         results = {}
-        results_queue = Queue()
+        results_queue: Queue = Queue()
 
         def process_results():
             while True:
@@ -103,7 +103,7 @@ class PoolScanner(Scanner):
     @staticmethod
     def _scan_file_parallel(path: Path,
                             root: t.Optional[Path],
-                            analysers: [FileAnalyser],
+                            analysers: t.List[FileAnalyser],
                             timeout: int,
                             report_results: t.Callable[[str, dict, t.Dict[str, str]], None],
                             pool: Pool):
@@ -125,8 +125,8 @@ class PoolScanner(Scanner):
 
         tasks = [pool.apply_async(
             _apply_analysis, (analyser, path, root),
-            callback=task_completed(analyser.category_name),
-            error_callback=task_failed(analyser.category_name))
+            callback=task_completed(analyser.category),
+            error_callback=task_failed(analyser.category))
                 for analyser in analysers if analyser.accepts(path)]
 
         for _task in tasks:
@@ -138,5 +138,5 @@ class PoolScanner(Scanner):
         report_results(relpath, result, errors)
 
 
-def _apply_analysis(analyser: FileAnalyser, path: Path, root: t.Optional[Path]) -> dict:
+def _apply_analysis(analyser: FileAnalyser, path: Path, root: t.Optional[Path]) -> t.Optional[t.Any]:
     return analyser(path, root=root)

@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, Iterable
+import typing as t
 from pathlib import Path
 
-from . import TextFileAnalyser
+from . import SourceCodeAnalyser
 from .Dataset import Dataset
 from .textutils import analyse_text, analyse_license_text
 
@@ -13,17 +13,16 @@ from ..commentparser import Comment, extract_comments
 from ..commentparser.language import Lang, classify
 
 
-class CommentAnalyser(TextFileAnalyser):
-    category_name = 'comments'
-
+class CommentAnalyser(SourceCodeAnalyser):
     def __init__(self, dataset: Dataset, include_copyright=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.dataset = dataset
         self.include_copyright = include_copyright
 
-    def _match(self, path: Path) -> bool:
-        return classify(path) != Lang.Unknown and super()._match(path)
+    @property
+    def category(self) -> str:
+        return 'comments'
 
     @property
     def options(self) -> dict:
@@ -33,7 +32,7 @@ class CommentAnalyser(TextFileAnalyser):
             'includeCopyright': self.include_copyright
         }
 
-    def analyse(self, path: Path, root: Optional[Path] = None) -> Optional[list]:
+    def analyse(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[list]:
         with path.open(errors="surrogateescape") as fp:
             content = fp.read()
             comments = extract_comments(content, classify(path))
@@ -60,7 +59,7 @@ class CommentAnalyser(TextFileAnalyser):
 
         return None
 
-    def __analyse_comments(self, comments) -> Iterable[dict]:
+    def __analyse_comments(self, comments) -> t.Iterable[dict]:
         if len(comments) > 0:
             head, *tail = comments
             res = analyse_license_text(head.text, self.dataset,

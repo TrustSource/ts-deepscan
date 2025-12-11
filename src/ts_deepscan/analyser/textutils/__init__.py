@@ -10,7 +10,6 @@ import spacy
 
 import warnings
 
-from typing import Optional, Iterable
 from pathlib import Path
 
 from spacy.vocab import Vocab
@@ -25,7 +24,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 __nlp = None
 
 
-def create_doc(text: str = '') -> Optional[Doc]:
+def create_doc(text: str = '') -> t.Optional[Doc]:
     global __nlp
 
     if not __nlp:
@@ -63,10 +62,11 @@ def compute_hash(doc: Doc) -> str:
 def compute_file_hash(path: Path) -> t.Tuple[str, str]:
     h = hashlib.sha1()
     with path.open('rb') as fp:
-        chunk = 0
+        chunk = b'init'  # Initialize with non-empty bytes
         while chunk != b'':
             chunk = fp.read(1024)
-            h.update(chunk)
+            if chunk:  # Only update if we have data
+                h.update(chunk)
 
     return h.hexdigest(), 'sha1'
 
@@ -114,7 +114,7 @@ def compute_file_hash(path: Path) -> t.Tuple[str, str]:
 
 def extract_copyright(text) -> dict:
     authors = []
-    copyrights = []
+    copyrights: t.List[t.Dict[str, t.Any]] = []
 
     def push_detection_to_results(res_type, v):
         if res_type == 'years':
@@ -149,7 +149,7 @@ def extract_copyright(text) -> dict:
     return result
 
 
-def find_spdx_copyright_text(text: str) -> Iterable[str]:
+def find_spdx_copyright_text(text: str) -> t.Iterable[str]:
     expr_begin = 0
     expr = 'spdx-filecopyrighttext:'
 
@@ -169,7 +169,7 @@ def find_spdx_copyright_text(text: str) -> Iterable[str]:
         expr_begin = expr_end
 
 
-def find_spdx_license_id(text: str) -> Optional[str]:
+def find_spdx_license_id(text: str) -> t.Optional[str]:
     expr = 'spdx-license-identifier:'
     expr_begin = text.lower().find(expr)
 
@@ -226,7 +226,7 @@ __ignored_aliases = [
 ]
 
 
-def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
+def find_aliases(text: str, dataset: Dataset) -> t.Iterable[str]:
     for k, v in dataset.data.items():
         name = v['name']
         aliases = v['aliases']
@@ -258,7 +258,7 @@ def find_aliases(text: str, dataset: Dataset) -> Iterable[str]:
 
 def analyse_text(text: str, dataset: Dataset,
                  timeout: int = -1,
-                 search_copyright: bool = True) -> Optional[dict]:
+                 search_copyright: bool = True) -> t.Optional[dict]:
 
     from ..scancode import detect_licenses as scancode_detect_licenses
 
@@ -287,7 +287,7 @@ def analyse_text(text: str, dataset: Dataset,
     return result if result else None
 
 
-def analyse_license_text(text: str, dataset: Dataset, search_copyright: bool = True) -> Optional[dict]:
+def analyse_license_text(text: str, dataset: Dataset, search_copyright: bool = True) -> t.Optional[dict]:
     key, score = find_match(text, dataset)
     if key:
         result = {

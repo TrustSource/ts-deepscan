@@ -12,8 +12,6 @@ from . import FileAnalyser
 
 
 class YaraAnalyser(FileAnalyser):
-    category_name = 'yara'
-
     def __init__(self, rules_path: Path, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -24,6 +22,10 @@ class YaraAnalyser(FileAnalyser):
             rules.save(file=self._rules_buf)
 
         self._rules: t.Optional[yara.Rules] = None
+
+    @property
+    def category(self) -> str:
+        return 'yara'
 
     @staticmethod
     def _compile_rules(path: Path) -> t.Optional[yara.Rules]:

@@ -12,9 +12,6 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
-dataclasses_json.cfg.global_config.encoders[datetime] = datetime.isoformat
-dataclasses_json.cfg.global_config.decoders[datetime] = datetime.fromisoformat
-
 
 @dataclass_json
 @dataclass
@@ -29,8 +26,9 @@ class Scan:
     summary: dict = field(default_factory=lambda: {})
 
 
-def _add_copyright_info(info: t.Union[dict, t.List[dict]], copyrights: dict):
-    if type(info) is list:
+def _add_copyright_info(info: t.Union[t.Dict[str, t.Any], t.List[t.Dict[str, t.Any]]],
+                        copyrights: t.Dict[str, t.Dict[str, t.List[str]]]):
+    if isinstance(info, list):
         for i in info:
             _add_copyright_info(i, copyrights)
     else:
@@ -58,9 +56,9 @@ def _add_license_info(info: dict, licenses: set, copyrights: dict):
 
 
 def compute_summary(scan: Scan):
-    licenses = set()
-    copyrights = {}
-    crypto_algorithms = {}
+    licenses: t.Set[str] = set()
+    copyrights: t.Dict[str, t.Dict[str, t.List[str]]] = {}
+    crypto_algorithms: t.Dict[str, t.List[str]] = {}
 
     for res in scan.result.values():
         if lic_info := res.get('license'):
@@ -83,13 +81,13 @@ def compute_summary(scan: Scan):
                     codings.append(coding)
                 crypto_algorithms[alg] = codings
 
-    licenses = list(licenses)
+    licenses_list = list(licenses)
 
     scan.summary = {
-        'licenses': licenses,
+        'licenses': licenses_list,
         'copyrights': copyrights,
         'crypto_algorithms': crypto_algorithms,
-        'incompatible_licenses': compute_licenses_compatibility(licenses)
+        'incompatible_licenses': compute_licenses_compatibility(licenses_list)
     }
 
 
