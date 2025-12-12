@@ -11,6 +11,8 @@ import ts_deepscan.util as util
 
 from pathlib import Path
 
+from . import FileScanInput, ScanResults
+
 from .Scanner import Scanner
 from ..analyser import FileAnalyser
 
@@ -39,7 +41,7 @@ class ParallelScanner(Scanner):
 
         self._num_jobs = num_jobs if num_jobs > 0 else mp.cpu_count() - 1
 
-    def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
+    def _do_scan(self, files: t.List[FileScanInput]) -> ScanResults:
         results = {}
 
         tasks = _ctx.Queue()

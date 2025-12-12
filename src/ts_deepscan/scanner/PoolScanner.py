@@ -8,6 +8,8 @@ from concurrent import futures
 from threading import Thread, RLock
 from queue import Queue
 
+from . import FileScanInput, ScanResults
+
 from .pool import Pool
 from .Scanner import Scanner
 from ..analyser import FileAnalyser
@@ -35,7 +37,7 @@ class PoolScanner(Scanner):
 
         return self._pool
 
-    def _do_scan(self, files: t.List[t.Tuple[Path, t.Optional[Path]]]) -> dict:
+    def _do_scan(self, files: t.List[FileScanInput]) -> ScanResults:
         results = {}
         results_queue: Queue = Queue()
 
@@ -115,7 +117,7 @@ class PoolScanner(Scanner):
         def task_completed(_cat):
             def _callback(_res):
                 if _res:
-                    result[_cat] = _res
+                    result[_res.category] = _res.data
             return _callback
 
         def task_failed(_cat):

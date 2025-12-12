@@ -3,7 +3,7 @@ import typing as t
 from pathlib import Path
 from scanoss.winnowing import Winnowing
 
-from ..analyser import SourceCodeAnalyser
+from ..analyser import SourceCodeAnalyser, AnalysisResult
 from ..commentparser.language import Lang, classify
 
 
@@ -22,13 +22,11 @@ class ScanossAnalyser(SourceCodeAnalyser):
             'includeWfp': True
         }
 
-    def analyse(self, path: Path, root: t.Optional[Path] = None):
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         relpath = path.relative_to(root) if root else path
 
         if res := self._winnowing.wfp_for_file(str(path), str(relpath)):
-            return {
-                'wfp': res
-            }
+            return AnalysisResult(self.category, {'wfp': res})
         else:
             return None
 

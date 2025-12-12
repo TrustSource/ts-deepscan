@@ -3,7 +3,8 @@ import concurrent.futures as futures
 
 import ts_deepscan.util as util
 
-from pathlib import Path
+
+from . import FileScanInput, FileScanResult, ScanResults
 
 from .Scanner import Scanner
 from ..analyser import FileAnalyser
@@ -17,11 +18,11 @@ class PoolExecutorScanner(Scanner):
         self._num_jobs = num_jobs
         self._task_timeout = task_timeout
 
-    def _do_scan(self, files: t.List[t.Tuple[Path, Path]]) -> dict:
+    def _do_scan(self, files: t.List[FileScanInput]) -> ScanResults:
         results = {}
         tasks = []
 
-        def task_completed(_task: futures.Future[t.Tuple[str, dict, list]]):
+        def task_completed(_task: futures.Future[t.Tuple[str, FileScanResult, list]]):
             if _task.cancelled():
                 self.finishedTasks += 1
                 self._progress()

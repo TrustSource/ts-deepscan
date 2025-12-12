@@ -8,7 +8,7 @@ import typing as t
 from io import StringIO, BytesIO
 from pathlib import Path
 
-from . import FileAnalyser
+from . import FileAnalyser, AnalysisResult
 
 
 class YaraAnalyser(FileAnalyser):
@@ -44,7 +44,7 @@ class YaraAnalyser(FileAnalyser):
             'includeYara': True
         }
 
-    def analyse(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[t.Any]:
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         res = []
 
         if not self._rules and self._rules_buf:
@@ -65,4 +65,4 @@ class YaraAnalyser(FileAnalyser):
             except TimeoutError:
                 pass
 
-        return res if res else None
+        return AnalysisResult(self.category, res) if res else None

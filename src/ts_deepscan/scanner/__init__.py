@@ -6,11 +6,25 @@ import typing as t
 import dataclasses_json
 import osadl_matrix
 
+from pathlib import Path
 from copy import copy
 from datetime import datetime
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
+
+
+# Alias for a file scan input represented as:
+#  ( absolute_file_path, optional_root_path )
+FileScanInput = t.Tuple[Path, t.Optional[Path]]
+
+# Alias for a file scan result represented as:
+#  { analyser_category: analyser_result_data }
+FileScanResult = t.Dict[str, t.Any]
+
+# Alisas for scanner results represented as:
+#  { relative_file_path: { analyser_category: analyser_result_data } }
+ScanResults = t.Dict[str, FileScanResult]
 
 
 @dataclass_json

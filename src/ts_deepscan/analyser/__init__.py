@@ -8,6 +8,12 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 
 
+class AnalysisResult:
+    def __init__(self, category: str, data: t.Any):
+        self.category = category
+        self.data = data
+
+
 class FileAnalyser(ABC):
     # Analysis timeout in seconds
     DEFAULT_TIMEOUT = 60
@@ -24,15 +30,15 @@ class FileAnalyser(ABC):
     def category(self) -> str:
         raise NotImplementedError()
 
-    def __call__(self, path: Path, root: t.Optional[Path] = None):
-        return self.analyse(path, root) if self.accepts(path) else None
+    def __call__(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
+        return self.apply(path, root) if self.accepts(path) else None
 
     @abstractmethod
     def _match(self, path: Path) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    def analyse(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[t.Any]:
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         raise NotImplementedError()
 
     @property

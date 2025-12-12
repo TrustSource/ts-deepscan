@@ -5,7 +5,7 @@
 import typing as t
 from pathlib import Path
 
-from . import SourceCodeAnalyser
+from . import SourceCodeAnalyser, AnalysisResult
 from .Dataset import Dataset
 from .textutils import analyse_text, analyse_license_text
 
@@ -32,7 +32,7 @@ class CommentAnalyser(SourceCodeAnalyser):
             'includeCopyright': self.include_copyright
         }
 
-    def analyse(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[list]:
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         with path.open(errors="surrogateescape") as fp:
             content = fp.read()
             comments = extract_comments(content, classify(path))
@@ -55,7 +55,7 @@ class CommentAnalyser(SourceCodeAnalyser):
                     results.append(res)
 
                 if len(results) > 0:
-                    return results
+                    return AnalysisResult(self.category, results)
 
         return None
 

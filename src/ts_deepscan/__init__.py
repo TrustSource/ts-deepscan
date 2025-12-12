@@ -120,9 +120,17 @@ def create_scanner(jobs: int = -1,
         else:
             print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
 
+    postprocessor = None
+
     if use_cache:
-        from .analyser.CachedAnalyser import CachedAnalyzer
-        analysers = [CachedAnalyzer(analyser) for analyser in analysers]
+        from .caching import ResultsCache
+        from .analyser.CachingAnalyser import CachingAnalyzer
+        from .scanner.postprocessing import CachingPostProcessor        
+        
+        cache = ResultsCache()
+        
+        postprocessor = CachingPostProcessor(cache=cache, processor=postprocessor)
+        analysers = [CachingAnalyzer(analyser, cache=cache, auto_store=False) for analyser in analysers]
 
     #return Scanner(analysers=analysers,
     #               ignore_patterns=list(ignore_pattern),
@@ -131,6 +139,7 @@ def create_scanner(jobs: int = -1,
     return PoolScanner(num_jobs=jobs,
                        task_timeout=timeout,
                        analysers=analysers,
+                       postprocessor=postprocessor,
                        ignore_patterns=list(ignore_pattern),
                        default_gitignores=default_gitignores)
 

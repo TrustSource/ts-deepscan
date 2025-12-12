@@ -3,7 +3,7 @@ import typing as t
 
 from pathlib import Path
 
-from ..analyser import SourceCodeAnalyser
+from ..analyser import SourceCodeAnalyser, AnalysisResult
 from ..commentparser.language import Lang, classify
 
 
@@ -21,7 +21,7 @@ class CryptoAnalyser(SourceCodeAnalyser):
             'includeCrypto': True
         }
 
-    def analyse(self, path: Path, root: t.Optional[Path] = None):
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         result = set()
 
         def _report_result(algorithm, coding):
@@ -30,4 +30,5 @@ class CryptoAnalyser(SourceCodeAnalyser):
         with path.open('rb') as fp:
             pyminr.find_crypto_algorithms(fp.read(), _report_result)
 
-        return [{'algorithm': res[0], 'coding': res[1]} for res in result]
+        data = [{'algorithm': res[0], 'coding': res[1]} for res in result]
+        return AnalysisResult(self.category, data) if data else None

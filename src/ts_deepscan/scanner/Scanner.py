@@ -15,8 +15,9 @@ from pathlib import Path
 from shutil import ReadError
 from gitignore_parser import parse_gitignore
 
+from . import FileScanInput, FileScanResult, ScanResults
 from ..analyser import FileAnalyser
-
+from .postprocessing import PostProcessor
 
 def _register_unpack_formats() -> t.Set[str]:
     """
@@ -43,9 +44,12 @@ _archive_exts = _register_unpack_formats()
 DEFAULT_FILE_MAX_SIZE = 1024 * int(os.environ.get('TS_DEPSCAN_FILE_MAX_SIZE', 1000))
 
 
+
+
 class Scanner(object):
     def __init__(self,
                  analysers: t.List[FileAnalyser],
+                 postprocessor: t.Optional[PostProcessor] = None,
                  file_max_size: int = DEFAULT_FILE_MAX_SIZE,
                  ignore_patterns: t.Optional[t.List[str]] = None,
                  ignore_hidden_files: bool = True,
@@ -53,6 +57,8 @@ class Scanner(object):
                  unpack_archives: bool = True):
 
         self.analysers = analysers
+        self.postprocessor = postprocessor
+
         self.file_max_size = file_max_size
 
         # File patterns
@@ -84,18 +90,18 @@ class Scanner(object):
         self._cleanup: t.List[Path] = []
 
     @staticmethod
-    def _scan_file(path: Path, analysers: t.List[FileAnalyser], root: t.Optional[Path]) -> t.Tuple[str, dict, t.List[str]]:
+    def _scan_file(path: Path, analysers: t.List[FileAnalyser], root: t.Optional[Path]) -> t.Tuple[str, FileScanResult, t.List[str]]:
         result = {}
         errors = []
 
         relpath = str(path.relative_to(root) if root else path)
 
-        for analyse in analysers:
+        for analyser in analysers:
             try:
-                if analyse.accepts(path) and (res := analyse(path, root=root)):
-                    result[analyse.category] = res
+                if analyser.accepts(path) and (res := analyser(path, root=root)):
+                    result[res.category] = res.data
             except: # noqa
-                msg = f'An error occured while scanning {relpath} using \'{analyse.category}\' analyser'
+                msg = f'An error occured while scanning {relpath} using \'{analyser.category}\' analyser'
                 util.error(msg)
                 errors.append(msg)
 
@@ -112,7 +118,7 @@ class Scanner(object):
     def cancelled(self):
         return self._cancelled
 
-    def run(self, paths: t.List[Path]) -> dict:
+    def run(self, paths: t.List[Path]) -> ScanResults:
         files: t.List[t.Tuple[Path, t.Optional[Path]]] = []
 
         if self.unpack_folder:
@@ -176,7 +182,11 @@ class Scanner(object):
             self.totalTasks = len(files)
             self.finishedTasks = 0
 
-            return self._do_scan(files)
+            results = self._do_scan(files)
+            if self.postprocessor:
+                results = self.postprocessor.apply(results)
+
+            return results
 
         finally:
             self._do_cleanup()
@@ -184,7 +194,7 @@ class Scanner(object):
     def cancel(self):
         self._cancelled = True
 
-    def _do_scan(self, files: t.List[t.Tuple[Path, t.Optional[Path]]]) -> dict:
+    def _do_scan(self, files: t.List[FileScanInput]) -> ScanResults:
         results = {}
 
         for path, root in files:

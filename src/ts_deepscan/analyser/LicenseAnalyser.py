@@ -6,7 +6,7 @@ import re
 
 from .textutils import *
 
-from . import TextFileAnalyser
+from . import TextFileAnalyser, AnalysisResult
 from ..analyser.Dataset import Dataset
 from ..commentparser.language import Lang, classify
 
@@ -46,7 +46,7 @@ class LicenseAnalyser(TextFileAnalyser):
             'analyseAllTextFiles': self.analyse_all_text_files
         }
 
-    def analyse(self, path: Path, root: t.Optional[Path] = None):
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
         with path.open('r', encoding='utf-8', errors="surrogateescape") as fp:
             result = None
             content = fp.read()
@@ -60,4 +60,4 @@ class LicenseAnalyser(TextFileAnalyser):
                                       timeout=self.timeout,
                                       search_copyright=self.include_copyright)
 
-            return result
+            return AnalysisResult(self.category, result) if result else None
