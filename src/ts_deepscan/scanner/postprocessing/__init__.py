@@ -28,8 +28,6 @@ class CompositePostProcessor(PostProcessor):
     
 
 class CachingPostProcessor(PostProcessor):
-    from ...caching import ResultsCache, CacheableResult
-
     def __init__(self, cache: ResultsCache, processor: t.Optional[PostProcessor] = None):
         self._cache = cache
         self._processor = processor        
@@ -38,10 +36,9 @@ class CachingPostProcessor(PostProcessor):
         if self._processor:
             results = self._processor.apply(results)
 
-        for file_results in results.values():
-            for cat, res in file_results.items():
+        for file_results in results.values():            
+            for res in file_results:
                 if isinstance(res, CacheableResult):
                     self._cache.store(res)
-                    file_results[cat] = res.data
 
         return results

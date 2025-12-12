@@ -100,9 +100,7 @@ class ParallelScanner(Scanner):
             self._notifyCompletion(relpath, result, errors)
 
             if result:
-                results.update({
-                    relpath: result
-                })
+                results[relpath] = result
 
             tasks_done += 1
 

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import typing as t
-import dataclasses_json
 import osadl_matrix
 
 from pathlib import Path
@@ -13,18 +12,19 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
+from ..analyser import AnalysisResult
 
 # Alias for a file scan input represented as:
 #  ( absolute_file_path, optional_root_path )
 FileScanInput = t.Tuple[Path, t.Optional[Path]]
 
 # Alias for a file scan result represented as:
-#  { analyser_category: analyser_result_data }
-FileScanResult = t.Dict[str, t.Any]
+#  ( relative_file_path, [ analyser_results ], [ error_messages ] )
+FileScanResult = t.Tuple[str, t.List[AnalysisResult], t.List[str]]
 
 # Alisas for scanner results represented as:
-#  { relative_file_path: { analyser_category: analyser_result_data } }
-ScanResults = t.Dict[str, FileScanResult]
+#  { relative_file_path: [ analyser_results ] }
+ScanResults = t.Dict[str, t.List[AnalysisResult]]
 
 
 @dataclass_json

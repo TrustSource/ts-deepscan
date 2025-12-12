@@ -188,6 +188,8 @@ def execute_scan(paths: t.List[Path], _scanner: Scanner, title='') -> Scan:
         'finished': _scanner.finishedTasks
     }
 
+    result = {relpath:{res.category: res.data for res in res_list} for relpath, res_list in result.items()}
+
     _scan = Scan(result=result,
                  no_result=no_result,
                  stats=stats,  # prepare_stats(result, no_result, stats)

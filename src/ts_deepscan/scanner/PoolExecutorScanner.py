@@ -22,7 +22,7 @@ class PoolExecutorScanner(Scanner):
         results = {}
         tasks = []
 
-        def task_completed(_task: futures.Future[t.Tuple[str, FileScanResult, list]]):
+        def task_completed(_task: futures.Future[FileScanResult]):
             if _task.cancelled():
                 self.finishedTasks += 1
                 self._progress()
@@ -32,9 +32,7 @@ class PoolExecutorScanner(Scanner):
             self._notifyCompletion(relpath, result, errors)
 
             if result:
-                results.update({
-                    relpath: result
-                })
+                results[relpath] = result                
 
         executor = futures.ProcessPoolExecutor(max_workers=self._num_jobs if self._num_jobs > 0 else None)
 

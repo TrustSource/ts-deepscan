@@ -16,8 +16,10 @@ from shutil import ReadError
 from gitignore_parser import parse_gitignore
 
 from . import FileScanInput, FileScanResult, ScanResults
-from ..analyser import FileAnalyser
+
+from ..analyser import FileAnalyser, AnalysisResult
 from .postprocessing import PostProcessor
+
 
 def _register_unpack_formats() -> t.Set[str]:
     """
@@ -79,7 +81,7 @@ class Scanner(object):
         # Callback accepting a relative path
         self.onPathIgnored: t.Optional[t.Callable[[str], None]] = None
         # Callback accepting relative path and results
-        self.onFileScanCompleted: t.Optional[t.Callable[[str, dict, list], None]] = None
+        self.onFileScanCompleted: t.Optional[t.Callable[[str, t.List[AnalysisResult], t.List[str]], None]] = None
         # Callback accepting number of finished and total tasks
         self.onProgress: t.Optional[t.Callable[[int, int], None]] = None
 
@@ -90,8 +92,8 @@ class Scanner(object):
         self._cleanup: t.List[Path] = []
 
     @staticmethod
-    def _scan_file(path: Path, analysers: t.List[FileAnalyser], root: t.Optional[Path]) -> t.Tuple[str, FileScanResult, t.List[str]]:
-        result = {}
+    def _scan_file(path: Path, analysers: t.List[FileAnalyser], root: t.Optional[Path]) -> FileScanResult:
+        results = []
         errors = []
 
         relpath = str(path.relative_to(root) if root else path)
@@ -99,13 +101,13 @@ class Scanner(object):
         for analyser in analysers:
             try:
                 if analyser.accepts(path) and (res := analyser(path, root=root)):
-                    result[res.category] = res.data
+                    results.append(res)
             except: # noqa
                 msg = f'An error occured while scanning {relpath} using \'{analyser.category}\' analyser'
                 util.error(msg)
                 errors.append(msg)
 
-        return relpath, result, errors
+        return relpath, results, errors
 
     @property
     def options(self) -> dict:
@@ -201,11 +203,9 @@ class Scanner(object):
             relpath, result, errors = self.__class__._scan_file(path, self.analysers, root)
 
             self._notifyCompletion(relpath, result, errors)
-
+            
             if result:
-                results.update({
-                    relpath: result
-                })
+                results[relpath] = result
 
         return results
 
@@ -222,7 +222,7 @@ class Scanner(object):
         if self.onProgress:
             self.onProgress(self.finishedTasks, self.totalTasks)
 
-    def _notifyCompletion(self, relpath: str, result: dict, errors: list):
+    def _notifyCompletion(self, relpath: str, result: t.List[AnalysisResult], errors: t.List[str]):
         if self.onFileScanCompleted:
             self.onFileScanCompleted(relpath, result, errors)
 
