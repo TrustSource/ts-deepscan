@@ -38,6 +38,10 @@ def cli():
               help='Enables searching for used cryptographic algorithms in source code files')
 @click.option('--include-scanoss-wfp/--no-include-scanoss-wfp', default=True, show_default=True,
               help='Enables computation of file fingerprints using SCANOSS')
+@click.option('--use-scanoss-api/--no-use-scanoss-api', default=True, show_default=True,
+              help='Enables usage of SCANOSS API for extended scans data')
+@click.option('--scanoss-api-key', type=str, default=None, show_default=True,
+              help='API key for SCANOSS API access')
 @click.option('--include-yara/--no-include-yara', default=False, show_default=True,
               help='Enables YARA analyser')
 @click.option('--yara-rules', type=click.Path(exists=True, path_type=pathlib.Path), required=False,
@@ -52,7 +56,7 @@ def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
     s = execute_scan(list(paths), scanner)
 
     # noinspection PyUnresolvedReferences
-    s_json = s.to_json()
+    s_json = s.to_json() # type: ignore
 
     if output_path:
         with output_path.resolve().open('w') as fp:
@@ -71,7 +75,8 @@ def scan(paths: tuple, output_path: t.Optional[pathlib.Path], *args, **kwargs):
 @click.argument('path', type=click.Path(exists=True, path_type=pathlib.Path))
 def upload(path: pathlib.Path, module_name: str, api_key: str, base_url: str):
     with path.open('r') as fp:
-        _scan = Scan.from_json(fp.read())
+        # noinspection PyUnresolvedReferences
+        _scan = Scan.from_json(fp.read()) # type: ignore
 
     if upload_scan(_scan, module_name, api_key, base_url):
         print("Transfer success!")

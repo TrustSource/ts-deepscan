@@ -83,6 +83,8 @@ def create_scanner(jobs: int = -1,
                    include_copyright: bool = True,
                    include_crypto: bool = True,
                    include_scanoss_wfp: bool = False,
+                   use_scanoss_api: bool = False,
+                   scanoss_api_key: t.Optional[str] = None,                   
                    include_yara: bool = False,
                    yara_rules: t.Optional[Path] = None,
                    ignore_pattern: tuple = tuple(),
@@ -106,10 +108,17 @@ def create_scanner(jobs: int = -1,
                                          include_copyright=include_copyright,
                                          include_crypto=include_crypto)
 
+    postprocessor = None
+
     if include_scanoss_wfp:
         analysers.append(
             ScanossAnalyser(timeout=timeout)
         )
+
+        if use_scanoss_api:
+            from .scanner.postprocessing.scanoss import ScanossPostProcessor
+            postprocessor = ScanossPostProcessor(api_key=scanoss_api_key)
+
 
     if include_yara:
         if yara_rules:
@@ -119,9 +128,7 @@ def create_scanner(jobs: int = -1,
                              rules_path=yara_rules))
         else:
             print('Warning: YARA analyser was not enabled. Please provide a path to YARA rules')
-
-    postprocessor = None
-
+    
     if use_cache:
         from .caching import ResultsCache
         from .analyser.CachingAnalyser import CachingAnalyzer
