@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] - 2026-11-06
+### Changed
+    * Relax the `click` requirement from `==8.1.7` to `>=8.1.7,<9`, so that tools depending on ts-deepscan (e.g. ts-scan) can use current click releases; verified with click 8.1.7 and 8.5.1
+
 ## [2.3.0] - 2025-02-25
 ### New Features
     * Add YARA analyser
